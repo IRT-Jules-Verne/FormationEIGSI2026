@@ -1,0 +1,15 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# colcon (build artifacts)
+build/
+install/
+log/
+
+# rosbag2 recordings
+demo_tri*/
+
+# Python
+__pycache__/
+*.pyc
