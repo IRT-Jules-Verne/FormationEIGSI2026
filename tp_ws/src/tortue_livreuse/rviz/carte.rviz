@@ -1,0 +1,110 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+    Help Height: 0
+    Tree Height: 400
+  - Class: rviz_common/Selection
+    Name: Selection
+  - Class: rviz_common/Tool Properties
+    Name: Tool Properties
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 11
+      Normal Cell Count: 0
+      Plane: XY
+      Reference Frame: <Fixed Frame>
+      Offset:
+        X: 5.5
+        Y: 5.5
+        Z: 0
+      Color: 160; 160; 164
+      Alpha: 0.5
+      Line Style:
+        Line Width: 0.03
+        Value: Lines
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Marker Scale: 1
+      Update Interval: 0
+    - Class: rviz_default_plugins/Path
+      Name: Trajet
+      Enabled: true
+      Color: 255; 170; 0
+      Alpha: 1
+      Line Style: Lines
+      Line Width: 0.03
+      Buffer Length: 1
+      Pose Style: None
+      Topic:
+        Value: /trajet
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+    - Class: rviz_default_plugins/Marker
+      Name: Tortue
+      Enabled: true
+      Namespaces:
+        {}
+      Topic:
+        Value: /tortue_marker
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+    - Class: rviz_default_plugins/InteractiveMarkers
+      Name: Lieux et drapeau
+      Enabled: true
+      Interactive Markers Namespace: /carte
+      Show Axes: false
+      Show Descriptions: true
+      Show Visual Aids: false
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: world
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/PublishPoint
+      Single click: true
+      Topic:
+        Value: /destination_point
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Current View
+      Angle: 0
+      Scale: 55
+      X: 5.5
+      Y: 5.5
+      Target Frame: <Fixed Frame>
+      Value: TopDownOrtho (rviz_default_plugins)
+    Saved: ~
+Window Geometry:
+  Width: 1100
+  Height: 750
+  Displays:
+    collapsed: false
+  Tool Properties:
+    collapsed: true
+  Selection:
+    collapsed: true
+  Views:
+    collapsed: true
