@@ -11,6 +11,13 @@ build = { cmd = "colcon build", cwd = "demo_ws" }
 # Equivalent de : pixi shell ; .\install\local_setup.ps1   (taper 'exit' pour quitter)
 ws = { cmd = "powershell -NoExit -ExecutionPolicy Bypass -Command \". .\\install\\local_setup.ps1; Write-Host 'Overlay demo_ws charge' -ForegroundColor Green\"", cwd = "demo_ws", depends-on = ["build"] }
 
+# Compile le workspace du TP (tp_ws)
+tp-build = { cmd = "colcon build", cwd = "tp_ws" }
+# Ouvre un PowerShell avec ROS 2 (pixi) + l'overlay tp_ws charge (taper 'exit' pour quitter)
+tp = { cmd = "powershell -NoExit -ExecutionPolicy Bypass -Command \". .\\install\\local_setup.ps1; Write-Host 'Overlay tp_ws charge' -ForegroundColor Green\"", cwd = "tp_ws" }
+# Genere le PDF de l'enonce du TP (environnement temporaire, n'affecte pas ROS 2)
+tp-pdf = "pixi exec -s python=3.12 -s markdown python outils/md_vers_pdf.py tp_ws/TP_tortue_livreuse.md"
+
 [activation.env]
 # Isole ROS 2 sur la machine locale : evite de voir les noeuds des autres etudiants
 # (applique automatiquement par pixi shell / pixi run, dans chaque terminal).
