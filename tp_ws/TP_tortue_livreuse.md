@@ -64,7 +64,11 @@ cd tp_ws
 tree /F src
 ```
 
-Vous devez voir :
+Vous devez obtenir :
+
+![Résultat de tree /F src](images/tree_f_src.png)
+
+Le rôle de chaque fichier :
 
 ```
 src
@@ -99,6 +103,8 @@ colcon build
 dir
 ```
 
+![Résultat de colcon build](images/colcon_build.png)
+
 - **Q3.** Quels nouveaux dossiers sont apparus à côté de `src` ? Lequel contient ce qui sera réellement exécuté ?
 
 ### 1.3 Charger l'overlay
@@ -109,6 +115,8 @@ ros2 pkg list | Select-String tortue      # rien : ROS 2 ne connaît pas encore 
 ros2 pkg list | Select-String tortue      # il apparaît
 ros2 pkg executables tortue_livreuse
 ```
+
+![Exécutables du package tortue_livreuse](images/ros2_pkg_executables.png)
 
 - **Q4.** Avec vos mots : à quoi sert `local_setup.ps1` ? Que se passe-t-il si on ouvre un nouveau terminal sans le relancer ?
 
@@ -136,6 +144,10 @@ ros2 topic pub --once /destination std_msgs/msg/String "{data: boulangerie}"
 
 Observez la tortue et les messages du terminal 1. Essayez ensuite `parc`, puis `maison`, puis un lieu qui n'existe pas (`lune`).
 
+| Après la livraison à la boulangerie | Après une 2e livraison |
+|---|---|
+| ![Première livraison](images/livraison1.png) | ![Deuxième livraison](images/livraison2.png) |
+
 - **Q5.** Que se passe-t-il pour un lieu inconnu ? Et si vous envoyez un nouvel ordre pendant que la tortue roule ?
 
 ### 2.3 Les nœuds
@@ -158,8 +170,10 @@ rqt_graph
 
 Dans le menu déroulant en haut à gauche, choisissez **Nodes/Topics (all)** et décochez **Hide: Debug**.
 
-- **Q8.** Retrouvez les topics `/destination`, `/turtle1/pose` et `/turtle1/cmd_vel`. Qui publie, qui écoute ?
-  *Remarque :* `rqt_graph` n'affiche que les **topics**. Les services et les actions n'y apparaissent pas.
+![rqt_graph de l'application](images/rqt_graph.png)
+
+- **Q8.** Retrouvez les topics `/turtle1/pose` et `/turtle1/cmd_vel`. Qui publie, qui écoute ? Pourquoi `/destination` n'apparaît-il pas, alors que le `navigateur` y est abonné ? (Indice : qui publie dessus ?)
+  *Remarque :* `rqt_graph` affiche les **topics**, pas les services. Les actions apparaissent seulement à travers leurs topics internes (`.../_action/feedback` et `.../_action/status`).
 
 ---
 
@@ -195,6 +209,8 @@ ros2 topic echo /statut
 ```
 
 Dans le terminal 2, envoyez une livraison vers `ecole`. Recommencez ensuite avec `ros2 topic echo /turtle1/cmd_vel` à la place de `/statut`.
+
+![ros2 topic echo /turtle1/cmd_vel pendant un trajet](images/echo_cmd_vel.png)
 
 - **Q12.** Que voit-on sur `/turtle1/cmd_vel` pendant le trajet ? Et à l'arrivée ?
 
@@ -255,6 +271,8 @@ ros2 service call /kill turtlesim/srv/Kill "{name: 'ma_tortue'}"
 
 Faites ensuite une livraison : le trait de la tortue est maintenant rouge et épais.
 
+![Trait rouge après /turtle1/set_pen](images/set_pen_turtlesim.png)
+
 ---
 
 ## Partie 5 — Actions (15 min)
@@ -277,6 +295,14 @@ ros2 interface show turtlesim/action/RotateAbsolute
 ```powershell
 ros2 action send_goal /turtle1/rotate_absolute turtlesim/action/RotateAbsolute "{theta: 3.14}" --feedback
 ```
+
+Le but est accepté, puis les feedbacks arrivent pendant la rotation :
+
+![But accepté et premiers feedbacks](images/goal_accepted.png)
+
+À la fin, le serveur renvoie le résultat :
+
+![Derniers feedbacks et résultat](images/goal_finished_succeeded.png)
 
 - **Q20.** Que représente le feedback `remaining` ? Que vaut le résultat `delta` à la fin ?
 
@@ -307,7 +333,9 @@ Arrêtez l'application (Ctrl+C dans le terminal 1), puis :
 ros2 launch tortue_livreuse livraison_rviz.launch.py
 ```
 
-Deux fenêtres s'ouvrent : turtlesim et RViz. Dans RViz, la grille de 11 × 11 cases correspond à la fenêtre turtlesim. Les disques bleus sont les lieux, et la flèche verte est la tortue.
+Deux fenêtres s'ouvrent : turtlesim et RViz. Dans RViz, la grille de 11 × 11 cases correspond à la fenêtre turtlesim. Les disques bleus sont les lieux, et la flèche verte est la tortue. Le trait orange montre le trajet parcouru, et le trait jaune relie le repère `world` (le coin en bas à gauche) au repère `turtle1`.
+
+![turtlesim et RViz côte à côte, après quelques livraisons](images/turtlesim_rviz_example.png)
 
 ### 6.2 Les repères TF
 
@@ -318,6 +346,8 @@ ros2 run tf2_ros tf2_echo world turtle1       # Ctrl+C pour arrêter
 ```
 
 Envoyez une livraison et observez les valeurs.
+
+![tf2_echo world turtle1](images/tf_echo.png)
 
 - **Q23.** Quel est le repère **parent** et le repère **enfant** ? Que représentent `Translation` et `Rotation` ?
 - **Q24.** Dans RViz, panneau *Displays*, réglez **Fixed Frame** sur `turtle1` au lieu de `world`. Que se passe-t-il pendant un déplacement ? Remettez ensuite `world`.
@@ -330,6 +360,8 @@ Dans un terminal, lancez `ros2 topic echo /destination`, puis, dans RViz, avec l
 1. **Cliquez sur un lieu** (disque bleu) : la tortue y va.
 2. **Glissez le drapeau rouge** n'importe où, puis faites un **clic droit** dessus et choisissez **Livrer ici**.
 3. Choisissez l'outil **Publish Point** dans la barre du haut, puis cliquez sur la grille.
+
+![Clic droit sur le drapeau rouge : menu « Livrer ici »](images/rviz_init_avec_click_droit_livrerici.png)
 
 - **Q26.** Que voit-on sur `/destination` quand on clique sur un lieu ? Pour le drapeau, les messages partent sur un autre topic : lequel, et de quel type ? (Utilisez `ros2 node info /carte`.)
 - **Q27.** Le `navigateur` n'a pas été modifié pour fonctionner avec la souris. Comment est-ce possible ? Qu'est-ce que cela montre sur l'intérêt des topics ?
@@ -351,12 +383,14 @@ Les zones que vous pouvez modifier sont repérées dans le code par `>>> MODIFIA
 
 ### 7.1 Ajouter un lieu
 
-Dans `tortue_livreuse/lieux.py`, ajoutez un lieu `piscine` en `(5.5, 9.5)`. Puis :
+Dans `tortue_livreuse/lieux.py`, ajoutez un lieu `piscine` en `(3.0, 7.0)`. Puis :
 
 1. Testez **sans reconstruire** : relancez l'application et envoyez `piscine`.
 2. Faites `colcon build`, relancez la version RViz, et réessayez.
 
 - **Q29.** Pourquoi la modification n'est-elle pas prise en compte avant le `colcon build` ? (Pensez au rôle du dossier `install/`.)
+![Le lieu piscine apparaît dans RViz après colcon build](images/rviz_piscine_ajoutee.png)
+
 - **Q30.** La piscine apparaît aussi dans RViz, alors que `carte.py` n'a pas été modifié. Pourquoi ?
 
 ### 7.2 Changer un paramètre à chaud
