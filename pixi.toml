@@ -30,3 +30,5 @@ python = "3.12.*"
 ros-humble-desktop = ">=0.10.0,<0.11"
 ros-humble-turtlesim = ">=1.4.3,<2"
 colcon-common-extensions = ">=0.3.0,<0.4"
+# empy 4 casse "ros2 pkg create" (AttributeError: BUFFERED_OPT) : ROS 2 Humble attend empy 3
+empy = "3.3.*"
