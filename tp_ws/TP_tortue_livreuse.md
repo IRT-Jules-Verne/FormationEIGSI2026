@@ -455,6 +455,299 @@ Complétez le tableau avec un exemple tiré du TP pour chaque notion :
 
 ---
 
+## Pour aller plus loin (hors temps)
+
+Ces activités sont indépendantes du déroulé de 2 h, à faire si vous avez fini en avance ou après la séance. Elles demandent de **copier-coller** du code fourni et de **compléter** quelques lignes.
+
+### Activité A — Créer son propre package : la tournée automatique
+
+**Objectif :** créer un 2e package, `tortue_tournee`. Il contient un nœud `tournee` qui enchaîne plusieurs livraisons sans intervention, et un launch qui **orchestre** toute l'application.
+
+Le nœud `tournee` n'a besoin de rien modifier dans `tortue_livreuse`. Il utilise uniquement les topics qui existent déjà :
+
+```mermaid
+flowchart LR
+    TOUR[tournee] -- "/destination (String)" --> NAV[navigateur]
+    NAV -- "/statut (String)" --> TOUR
+```
+
+À chaque message `Reponse de la fabrique : ...` reçu sur `/statut`, la tournée envoie le lieu suivant.
+
+#### A.1 Générer le package
+
+Dans un terminal préparé, placez-vous dans `tp_ws\src` :
+
+```powershell
+cd src
+ros2 pkg create --build-type ament_python --dependencies rclpy std_msgs --node-name tournee tortue_tournee
+cd ..
+```
+
+- **QA1.** Quels fichiers ont été créés ? Comparez avec `tortue_livreuse` : qu'est-ce qui est identique, qu'est-ce qui manque ?
+- **QA2.** Dans `package.xml`, retrouvez les dépendances passées avec `--dependencies`. Dans `setup.py`, à quoi correspond la ligne ajoutée par `--node-name` ?
+
+#### A.2 Écrire le nœud
+
+Remplacez **tout** le contenu de `src\tortue_tournee\tortue_tournee\tournee.py` par :
+
+```python
+"""Noeud 'tournee' : enchaine automatiquement plusieurs livraisons.
+
+  - PUBLIE sur /destination le lieu suivant de la liste
+  - ECOUTE /statut pour savoir quand la livraison en cours est terminee
+"""
+
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+
+class Tournee(Node):
+
+    def __init__(self):
+        super().__init__('tournee')
+
+        # Parametres : la liste des lieux a visiter, et faut-il recommencer a la fin ?
+        self.declare_parameter('lieux', ['maison', 'ecole', 'boulangerie', 'parc'])
+        self.declare_parameter('boucle', False)
+
+        self.pub_destination = self.create_publisher(String, 'destination', 10)
+        self.create_subscription(String, 'statut', self.recevoir_statut, 10)
+
+        self.lieux = list(self.get_parameter('lieux').value)
+        self.index = 0          # position dans la liste des lieux
+        self.en_cours = False   # True tant que la tournee n'est pas terminee
+
+        # On attend que le navigateur soit abonne a /destination avant de commencer
+        self.minuterie = self.create_timer(1.0, self.demarrer)
+
+    def demarrer(self):
+        if self.pub_destination.get_subscription_count() == 0:
+            self.get_logger().info('En attente du navigateur...')
+            return
+        self.minuterie.cancel()
+        self.en_cours = True
+        self.get_logger().info(f'Debut de la tournee : {self.lieux}')
+        self.envoyer_suivant()
+
+    def envoyer_suivant(self):
+        if self.index >= len(self.lieux):
+            # A COMPLETER (A.4) : si le parametre 'boucle' vaut True,
+            # recommencer au premier lieu au lieu de s'arreter.
+            self.get_logger().info('Tournee terminee !')
+            self.en_cours = False
+            return
+
+        lieu = self.lieux[self.index]
+        self.get_logger().info(f'Livraison {self.index + 1}/{len(self.lieux)} : {lieu}')
+        self.pub_destination.publish(String(data=lieu))
+        self.index += 1
+
+    def recevoir_statut(self, msg):
+        # A la fin de chaque livraison, le navigateur publie "Reponse de la fabrique : ..."
+        if self.en_cours and msg.data.startswith('Reponse de la fabrique'):
+            self.envoyer_suivant()
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = Tournee()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
+```
+
+#### A.3 Construire et lancer
+
+```powershell
+colcon build                     # construit les DEUX packages du workspace
+. .\install\local_setup.ps1      # recharger l'overlay : il y a un nouveau package
+```
+
+**Terminal 1** : `ros2 launch tortue_livreuse livraison_rviz.launch.py`
+**Terminal 2** :
+
+```powershell
+ros2 run tortue_tournee tournee
+```
+
+Relancez ensuite la tournée avec votre propre liste de lieux :
+
+```powershell
+ros2 run tortue_tournee tournee --ros-args -p "lieux:=[parc, centre, ecole]"
+```
+
+- **QA3.** Pourquoi faut-il recharger `local_setup.ps1` après le premier `colcon build`, alors que ce n'était pas nécessaire après une simple modification de code ?
+- **QA4.** À quoi sert la fonction `demarrer` ? Que se passerait-il si on publiait le premier lieu dès la création du nœud ?
+- **QA5.** Lancez `rqt_graph` pendant la tournée. Où apparaît le nouveau nœud ?
+
+#### A.4 À compléter : la tournée en boucle
+
+Complétez la zone `A COMPLETER` de `envoyer_suivant` : si le paramètre `boucle` vaut `True`, la tournée recommence au premier lieu.
+
+> Indice : la valeur d'un paramètre se lit avec `self.get_parameter('boucle').value`. Pour recommencer, il suffit de remettre `self.index` à `0`, puis de laisser la fonction continuer.
+
+Testez votre code, puis essayez de **changer le paramètre pendant la tournée** :
+
+```powershell
+ros2 param set /tournee boucle true
+```
+
+- **QA6.** Le changement est-il pris en compte sans relancer le nœud ? Pourquoi ? (Regardez *quand* le paramètre est lu.)
+
+#### A.5 Orchestrer avec un fichier launch
+
+Un seul fichier launch va maintenant démarrer **toute** l'application (turtlesim, fabrique, navigateur, carte, RViz) **et** la tournée.
+
+1. Créez le dossier `src\tortue_tournee\launch`, puis le fichier `tournee.launch.py` :
+
+```python
+"""Lance l'application de livraison (avec RViz) ET la tournee automatique."""
+
+import os
+
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+    livreuse = get_package_share_directory('tortue_livreuse')
+
+    return LaunchDescription([
+        # 1. L'application existante, reutilisee telle quelle depuis l'autre package
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(livreuse, 'launch', 'livraison_rviz.launch.py'))
+        ),
+        # 2. Notre nouveau noeud, avec ses parametres
+        Node(
+            package='tortue_tournee',
+            executable='tournee',
+            name='tournee',
+            output='screen',
+            emulate_tty=True,
+            parameters=[{
+                'lieux': ['parc', 'boulangerie', 'ecole', 'maison', 'centre'],
+                'boucle': False,
+            }],
+        ),
+    ])
+```
+
+2. **À compléter dans `setup.py`** : le launch doit être copié dans `install/` lors du build.
+   - En haut du fichier, ajoutez :
+     ```python
+     import os
+     from glob import glob
+     ```
+   - Dans la liste `data_files`, ajoutez la ligne :
+     ```python
+     (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+     ```
+   Comparez avec le `setup.py` de `tortue_livreuse`.
+
+3. **À compléter dans `package.xml`** : déclarez que ce package a besoin de `tortue_livreuse` et de `launch_ros` pour s'exécuter. Ajoutez, sous les `<depend>` :
+   ```xml
+   <exec_depend>tortue_livreuse</exec_depend>
+   <exec_depend>launch_ros</exec_depend>
+   ```
+
+4. Reconstruisez, puis lancez **tout** avec une seule commande :
+
+```powershell
+colcon build
+ros2 launch tortue_tournee tournee.launch.py
+```
+
+- **QA7.** Que se passe-t-il si vous oubliez l'étape 2 ? Quel message d'erreur obtenez-vous ?
+- **QA8.** `IncludeLaunchDescription` réutilise le launch d'un **autre** package. Quel est l'intérêt, par rapport à recopier les nœuds dans ce launch ?
+
+#### A.6 À essayer
+
+- **Lieu inconnu :** mettez `lune` dans la liste des lieux. Que devient la tournée ? Pourquoi reste-t-elle bloquée ?
+- **QA9.** La tournée détecte la fin d'une livraison en lisant le **texte** publié sur `/statut`. Que se passerait-il si quelqu'un traduisait les messages du navigateur en anglais ? Proposez une meilleure « interface » entre les deux nœuds : un topic dédié, un service, ou une action avec son résultat.
+- **Défi :** sans modifier `tortue_livreuse`, modifiez la tournée pour qu'elle envoie des **coordonnées** sur `/destination_point` (type `geometry_msgs/msg/PointStamped`) au lieu de noms. Faites dessiner une étoile ou une maison à la tortue.
+  > Indice : regardez comment `carte.py` publie sur `/destination_point`.
+
+### Activité B — Enregistrer et rejouer avec les bags
+
+Un **bag** est un enregistrement des messages qui passent sur des topics. On peut ensuite le rejouer : les messages sont republiés avec leur timing d'origine, comme s'ils étaient produits en direct. C'est l'outil de base pour déboguer, analyser des essais ou rejouer un scénario.
+
+#### B.1 Enregistrer une tournée
+
+Lancez la tournée (`ros2 launch tortue_tournee tournee.launch.py`, ou bien l'application et des ordres envoyés à la main). Dans un autre terminal, **depuis `tp_ws`** :
+
+```powershell
+ros2 bag record -o bag_tournee /destination /statut /turtle1/pose /turtle1/cmd_vel
+```
+
+Arrêtez l'enregistrement avec **Ctrl+C** à la fin de la tournée.
+
+> `ros2 bag record -a` enregistre **tous** les topics. C'est pratique, mais cela peut produire de gros fichiers.
+
+#### B.2 Inspecter le bag
+
+```powershell
+dir bag_tournee
+ros2 bag info bag_tournee
+```
+
+- **QB1.** Combien de messages ont été enregistrés sur chaque topic ? Pendant combien de temps ?
+- **QB2.** Déduisez-en la fréquence de publication de `/turtle1/pose`. Comparez avec `ros2 topic hz` (partie 3).
+
+#### B.3 Rejouer les **ordres**
+
+Arrêtez tout. Relancez l'application **sans** la tournée (`ros2 launch tortue_livreuse livraison_rviz.launch.py`), puis :
+
+```powershell
+ros2 bag play bag_tournee --topics /destination
+```
+
+- **QB3.** Que fait la tortue ? Les ordres arrivent-ils tous en même temps ?
+- **QB4.** Essayez `--rate 2`. Pourquoi la tortue ne va-t-elle pas plus vite pour autant ? Que se passe-t-il pour certains ordres ? (Relisez la Q5.)
+
+#### B.4 Rejouer les **commandes de vitesse**
+
+Arrêtez tout, relancez l'application, puis :
+
+```powershell
+ros2 bag play bag_tournee --topics /turtle1/cmd_vel
+```
+
+- **QB5.** La tortue refait-elle le même trajet qu'en B.3 ? Pourquoi ? (Indice : comment se font les rotations ? Passent-elles par `/turtle1/cmd_vel` ?)
+- **QB6.** Rejouer `/destination` revient à rejouer des **objectifs** (boucle fermée), alors que rejouer `/turtle1/cmd_vel` revient à rejouer des **commandes** (boucle ouverte). Laquelle des deux méthodes est robuste à une position de départ différente ?
+
+#### B.5 Rejouer pour **analyser**, sans turtlesim
+
+On peut revoir un essai dans RViz sans relancer le « robot ». Arrêtez tout, puis lancez dans trois terminaux :
+
+```powershell
+ros2 run tortue_livreuse carte
+```
+```powershell
+rviz2 -d install\tortue_livreuse\share\tortue_livreuse\rviz\carte.rviz
+```
+```powershell
+ros2 bag play bag_tournee --topics /turtle1/pose
+```
+
+- **QB7.** RViz affiche le trajet de la tournée alors que turtlesim ne tourne pas. Qui publie `/turtle1/pose` ? Vérifiez avec `ros2 topic info /turtle1/pose -v`.
+- **QB8.** Ajoutez `--loop` à `ros2 bag play`. Dans quels cas réels cette possibilité de « rejouer un capteur » est-elle utile ?
+
+---
+
 ## Aide-mémoire
 
 | Commande | Rôle |
@@ -472,6 +765,10 @@ Complétez le tableau avec un exemple tiré du TP pour chaque notion :
 | `ros2 interface show <type>` | Contenu d'un message, d'un service ou d'une action |
 | `ros2 param list` / `get` / `set` | Paramètres |
 | `rqt_graph`, `rqt` | Outils graphiques |
+| `ros2 pkg create --build-type ament_python --dependencies <deps> --node-name <noeud> <package>` | Créer un package Python (depuis `src`) |
+| `ros2 bag record -o <dossier> <topics...>` / `-a` | Enregistrer des topics / tous les topics |
+| `ros2 bag info <dossier>` | Contenu d'un bag |
+| `ros2 bag play <dossier> [--topics ...] [--rate 2] [--loop]` | Rejouer un bag |
 
 ## Dépannage
 
@@ -484,4 +781,7 @@ Complétez le tableau avec un exemple tiré du TP pour chaque notion :
 | RViz : « Frame [world] does not exist », rien ne s'affiche | Le nœud `carte` ne tourne pas : utilisez `livraison_rviz.launch.py`. Vérifiez que *Fixed Frame* vaut `world`. |
 | RViz : cliquer sur un lieu ne fait rien | Sélectionnez l'outil **Interact** dans la barre du haut. |
 | La tortue tape un mur | Gardez les coordonnées des lieux entre 1 et 10. |
+| `ros2 pkg create` : `AttributeError: module 'em' has no attribute 'BUFFERED_OPT'` | Environnement Pixi pas à jour : récupérez le dernier `pixi.toml`/`pixi.lock` du dépôt puis `pixi install`. |
+| `ros2 bag info` : fichier `metadata.yaml` manquant | L'enregistrement n'a pas été arrêté proprement : `ros2 bag reindex bag_tournee`. |
+| `ros2 bag record` : le dossier existe déjà | Changez le nom avec `-o`, ou supprimez l'ancien dossier. |
 | Tout semble bloqué | Ctrl+C dans tous les terminaux, puis `ros2 daemon stop` et relancez. |

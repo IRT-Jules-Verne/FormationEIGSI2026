@@ -35,7 +35,7 @@ h2 { font-size: 15pt; color: #2b6cb0; border-bottom: 1px solid #cbd5e0; padding-
 h2.partie { break-before: page; }
 h3 { font-size: 12pt; margin-top: 1.2em; }
 code { font-family: Consolas, 'Courier New', monospace; font-size: 9.5pt; background: #edf2f7; padding: 1px 3px; border-radius: 3px; }
-pre { background: #f4f6f8; border: 1px solid #d9dee4; border-radius: 4px; padding: 8px 10px; white-space: pre-wrap; break-inside: avoid; }
+pre { background: #f4f6f8; border: 1px solid #d9dee4; border-radius: 4px; padding: 8px 10px; white-space: pre-wrap; }
 pre code { background: none; padding: 0; }
 table { border-collapse: collapse; margin: 0.8em 0; break-inside: avoid; }
 th, td { border: 1px solid #cbd5e0; padding: 4px 8px; vertical-align: top; }
@@ -58,6 +58,7 @@ def convertir(chemin_md: Path) -> Path:
     corps = markdown.markdown(texte, extensions=['tables', 'fenced_code', 'sane_lists'])
     # Chaque "Partie" commence sur une nouvelle page
     corps = corps.replace('<h2>Partie', '<h2 class="partie">Partie')
+    corps = corps.replace('<h2>Pour aller plus loin', '<h2 class="partie">Pour aller plus loin')
 
     titre = re.search(r'^# (.+)$', texte, flags=re.M)
     page = f"""<!doctype html>

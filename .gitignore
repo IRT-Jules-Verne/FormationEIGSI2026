@@ -9,6 +9,7 @@ log/
 
 # rosbag2 recordings
 demo_tri*/
+bag_*/
 
 # Python
 __pycache__/
