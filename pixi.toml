@@ -5,8 +5,21 @@ platforms = ['win-64']
 version = "0.1.0"
 
 [tasks]
+# Compile le workspace de demo (demo_ws)
+build = { cmd = "colcon build", cwd = "demo_ws" }
+# Ouvre un PowerShell avec ROS 2 (pixi) + l'overlay demo_ws charge.
+# Equivalent de : pixi shell ; .\install\local_setup.ps1   (taper 'exit' pour quitter)
+ws = { cmd = "powershell -NoExit -ExecutionPolicy Bypass -Command \". .\\install\\local_setup.ps1; Write-Host 'Overlay demo_ws charge' -ForegroundColor Green\"", cwd = "demo_ws", depends-on = ["build"] }
+
+[activation.env]
+# Isole ROS 2 sur la machine locale : evite de voir les noeuds des autres etudiants
+# (applique automatiquement par pixi shell / pixi run, dans chaque terminal).
+ROS_LOCALHOST_ONLY = "1"
 
 [dependencies]
+# Python 3.12 => builds robostack PyQt5 (les builds py3.14 passent a PyQt6
+# alors que rqt/qt_gui ne sont pas portes : rqt plante avec QtCriticalMsg).
+python = "3.12.*"
 ros-humble-desktop = ">=0.10.0,<0.11"
 ros-humble-turtlesim = ">=1.4.3,<2"
 colcon-common-extensions = ">=0.3.0,<0.4"
