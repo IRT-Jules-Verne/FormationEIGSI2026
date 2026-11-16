@@ -97,7 +97,7 @@ Dans RViz, le modèle s'affiche-t-il entièrement ? Regardez le panneau *Display
 ros2 launch tb3_livreur 1_modele.launch.py
 ```
 
-Une petite fenêtre « Joint State Publisher » apparaît. Bougez les curseurs. Puis :
+Une petite fenêtre « Joint State Publisher » apparaît. Bougez les curseurs. Puis dans un autre terminal :
 
 ```powershell
 ros2 topic echo /joint_states --once
@@ -116,15 +116,15 @@ ros2 topic echo /tf_static --once
 1. l'appel de la macro pour la **roue droite** (`>>> À COMPLÉTER 1`) ;
 2. l'origine de la **roulette arrière** `caster_back_joint` (`>>> À COMPLÉTER 2`), 81 mm derrière le centre du châssis, 4 mm sous `base_link`.
 
-Reconstruisez (`colcon build` puis rechargez l'overlay), relancez `1_modele.launch.py` : les deux roues doivent apparaître et tourner avec les curseurs.
+Reconstruisez (`pixi run nav-build` puis pixi run nav), relancez `1_modele.launch.py` : les deux roues doivent apparaître et tourner avec les curseurs.
 
 **Q3 — Avant d'essayer.** Si l'on inverse `parent` et `child` dans un joint, que se passe-t-il ? Prédisez, essayez sur le joint de la roulette, observez le terminal de `robot_state_publisher` et RViz, puis remettez en ordre.
 
-**À retenir.** Un URDF est un **arbre** : chaque lien a exactement un parent, et le lien racine (`base_footprint`) n'en a pas. Deux parents pour un lien, ou un cycle, et `robot_state_publisher` refuse le modèle.
+**À retenir.** Un URDF est un **arbre** : chaque lien a exactement un parent, et le lien racine (`base_footprint`) n'en a pas. Si il y a deux parents pour un lien, ou un cycle (un enfant qui est a une chemin qui ramène a son parent), et `robot_state_publisher` refuse le modèle.
 
 ### 1.3 Deux repères pour une base
 
-**Q4 — Avant de regarder.** Pourquoi le modèle a-t-il deux repères `base_footprint` et `base_link` ? Lequel est au niveau du sol ?
+**Q4 — Avant de regarder.** Pourquoi le modèle a-t-il deux repères : `base_footprint` et `base_link` ? Lequel est au niveau du sol ?
 
 **Pistes.**
 
@@ -135,7 +135,7 @@ ros2 run tf2_tools view_frames       # produit frames_xxx.pdf dans le dossier co
 
 Ouvrez le PDF : c'est le premier arbre TF du TP. Gardez-le, vous le comparerez à celui de la fin.
 
-**À retenir.** `base_footprint` est la projection du robot **au sol** (z = 0) : c'est le repère que Nav2 et AMCL utilisent pour la navigation plane. `base_link` est le châssis, 1 cm plus haut. Les capteurs sont attachés à `base_link`.
+**À retenir.** `base_footprint` est la projection du robot **au sol** (z = 0) : c'est le repère que Nav2 et AMCL utilisent pour la navigation. `base_link` est le châssis, le lieu où sont executé les vitesses, 1 cm plus haut. Les capteurs sont attachés à `base_link`.
 
 **Point de contrôle 1.** Le Burger complet dans RViz (châssis, deux roues, roulette, lidar bleu), roues qui tournent avec les curseurs, `view_frames` avec 7 repères.
 
@@ -145,16 +145,16 @@ Ouvrez le PDF : c'est le premier arbre TF du TP. Gardez-le, vous le comparerez �
 
 ## Partie 2 — Le lidar, le simulateur, l'odométrie (45 min)
 
-Un capteur est une **donnée** (`sensor_msgs/LaserScan`) **exprimée dans un repère** (`header.frame_id`). Si le repère est faux, tout ce qui suit est faux.
+Un capteur est une **donnée** (`sensor_msgs/LaserScan`) **exprimée dans un repère** (`header.frame_id`). Si le repère est faux (mal positionné) alors tout ce qui suit est faux.
 
 ### 2.1 Le repère du lidar
 
-**Q5 — Avant de lancer.** D'après le cours, combien de rayons et quelle portée a le LDS-01 du Burger ? Dans un message `LaserScan`, que signifie une valeur `inf` dans `ranges` ?
+**Q5 — Avant de lancer.** D'après ce que vous avez vu dans le cours, as t'on absolument besoin de la doc pour savoir le nombre de rayons qu'à un lidar (aide : souvenez vous du contenue du message LaserScan)? Dans un message `LaserScan`, que signifie une valeur `inf` dans `ranges` ?
 
-**Manipulation.** Le joint `scan_joint` existe dans l'URDF mais sa position est fausse (`>>> À COMPLÉTER 3`) : tel quel, le lidar est au centre du châssis. Il est en réalité posé 32 mm derrière le centre du châssis et 172 mm au-dessus de `base_link` (xyz = `-0.032 0 0.172`). Complétez, reconstruisez, puis lancez le robot complet :
+**Manipulation.** Le lien `base_scan` existe dans l'URDF mais son joint est incomplet (`>>> À COMPLÉTER 3`) : le lidar est posé 32 mm derrière le centre du châssis et 172 mm au-dessus de `base_link` (xyz = `-0.032 0 0.172`). Complétez, reconstruisez, puis lancez le robot complet :
 
 ```powershell
-ros2 launch tb3_livreur 2_robot.launch.py
+  ros2 launch tb3_livreur 2_robot.launch.py
 ```
 
 RViz s'ouvre avec le modèle, l'odométrie et le scan (points rouges). Dans un autre terminal :
@@ -165,13 +165,14 @@ ros2 topic echo /scan --once --no-arr
 ros2 run tf2_ros tf2_echo base_footprint base_scan
 ```
 
-**Pistes.** Comparez `angle_min`, `angle_increment`, `range_max` et `frame_id` à votre prédiction. Combien de valeurs dans `ranges` ? (`ros2 topic echo /scan --once | Select-String -Pattern "ranges" -Context 0,3`)
+**Pistes.** Regarder le contenue : `angle_min`, `angle_increment`, `range_max` et `frame_id`. Combien de valeurs dans `ranges` ? 
 
-**À retenir.** 360 rayons, un par degré, de 0,12 à 3,5 m. `inf` : rien touché avant `range_max`. Le `frame_id` est `base_scan` : les distances sont mesurées **depuis l'origine de ce repère**, l'angle 0 est **son** axe x. C'est TF qui permet de replacer ces points dans n'importe quel autre repère.
+**À retenir.** Notre lidar à 360 rayons, un par degré, de 0,12 à 3,5 m. `inf` : rien touché avant `range_max`. Le `frame_id` est `base_scan` : les distances sont mesurées **depuis l'origine de ce repère**, l'angle 0 est **son** axe x. C'est TF qui permet de replacer ces points dans n'importe quel autre repère.
 
 ### 2.2 Le lidar à l'envers
 
-**Q6 — Avant de modifier.** Si l'on tourne le lidar de 180° dans l'URDF, sans toucher au capteur, que devient l'affichage du scan dans RViz ? Les données du message `/scan` changent-elles ? Faites un croquis.
+**Q6 — Avant de modifier.** Si l'on tourne le lidar de 180° dans l'URDF, sans toucher au capteur, que devient l'affichage du scan dans RViz ? Les données du message `/scan` changent-elles ? 
+
 
 **Pistes.** Le joint `scan_joint` a un argument `scan_yaw`. Relancez avec `scan_yaw:=3.14159` :
 
@@ -181,7 +182,7 @@ ros2 launch tb3_livreur 2_robot.launch.py scan_yaw:=3.14159
 
 Comparez `ros2 topic echo /scan --once --no-arr` avant et après ; regardez `tf2_echo base_link base_scan`.
 
-**Manipulation.** Téléopérez le robot vers un mur avec le clavier, dans un terminal préparé **qui a le focus** :
+**Manipulation.** Téléopérez le robot vers un mur avec le clavier, dans un terminal préparé **qui a le focus** (cliquer dans le terminal):
 
 ```powershell
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
@@ -193,30 +194,34 @@ Le mur apparaît derrière le robot au lieu de devant. Remettez `scan_yaw:=0.0`.
 
 ### 2.3 L'odométrie
 
-**Q7 — Avant de regarder.** Qui publie la transformation `odom → base_footprint` ? Et avec `Fixed Frame = base_footprint` dans RViz, qu'est-ce qui bougera à l'écran quand le robot avance : le robot ou le monde ?
+**Q7 — Avant de regarder.** L'URDF de la partie 1 ne contient pas de repère `odom`. `robot_state_publisher` peut-il publier `odom → base_footprint` ? Sinon, qui le peut, et à partir de quelles informations ? Sur le vrai robot, qui le ferait ?
 
 **Pistes.**
 
 ```powershell
-ros2 node info /simulateur
-ros2 topic info /odom -v
+ros2 topic info /tf -v          # deux publieurs : lesquels ?
+ros2 node info /simulateur      # ce qu'il reçoit, ce qu'il publie
 ```
 
-Dans RViz, *Displays* > *Global Options* > *Fixed Frame* : essayez `odom`, puis `base_footprint`, pendant la téléopération.
+**Manipulation.** RViz dessine tout dans un seul repère, le *Fixed Frame* (*Displays* > *Global Options*) : c'est lui qui reste immobile à l'écran. Pendant la téléopération, essayez `base_footprint` (le robot reste au centre et les murs du scan défilent), puis `odom` (le robot se déplace et les murs restent en place). Gardez `odom` pour la suite.
 
-**Q8 — Avant de rouler.** Faites faire au robot un carré d'environ 2 m de côté à la téléopération, et revenez au point de départ « à l'œil ». L'odométrie reviendra-t-elle à zéro ?
+**À retenir.** Deux sources de TF : `robot_state_publisher` publie l'**intérieur** du robot (l'URDF, plus `/joint_states` pour les roues) ; l'odométrie publie **où est le robot** (`odom → base_footprint`) à partir des vitesses des roues : ici le simulateur, sur le vrai robot `turtlebot3_node`. Remplissez la ligne 2 du tableau TF.
 
-**Manipulation.** Notez la sortie de `tf2_echo odom base_footprint` au départ et à l'arrivée. Recommencez avec une odométrie parfaite :
+**Q8 — Avant de tourner.** Si le robot fait exactement un tour sur lui-même, l'odométrie dira-t-elle qu'il a tourné de 360° ? Comment le vérifier sans connaître la vraie position du robot ?
+
+**Manipulation.** *Fixed Frame* = `odom`. Dans *Displays* > *LaserScan*, réglez *Decay Time* à `60` : RViz garde les scans de la dernière minute, chacun placé là où l'odométrie dit que le robot était. Dans un autre terminal, lancez `ros2 run tf2_ros tf2_echo odom base_footprint` : le yaw est le dernier nombre de la ligne `Rotation: in RPY (degree)`. Ralentissez la rotation (touche `c` de la téléopération, plusieurs fois), puis faites tourner le robot sur place (`j`) jusqu'à ce que, **d'après l'odométrie**, il ait fait exactement un tour : le yaw repasse par 0 et le modèle dans RViz pointe de nouveau dans sa direction de départ. Arrêtez (`k`). Les murs vus maintenant se superposent-ils à ceux du début ?
+
+Recommencez avec une odométrie parfaite :
 
 ```powershell
 ros2 launch tb3_livreur 2_robot.launch.py derive:=false
 ```
 
-Remplissez la ligne 2 du tableau TF.
+*Pour aller plus loin : même manipulation avec un carré d'environ 2 m de côté. Les murs se dédoublent aussi, mais l'effet est moins net qu'avec la rotation.*
 
-**À retenir.** L'odométrie est une **intégration** des vitesses mesurées (ici : commandées, avec une erreur d'échelle et du bruit, comme des encodeurs sur un sol qui glisse). Elle est **continue** et précise à court terme, mais l'erreur **s'accumule** : au bout de quelques mètres, `odom` ne dit plus où est le robot dans la salle. Il faut une référence externe : la carte.
+**À retenir.** L'odométrie est une **intégration** des vitesses mesurées (ici : commandées, avec une erreur d'échelle et du bruit, comme des encodeurs sur un sol qui glisse). Elle est **continue** et précise à court terme, mais l'erreur **s'accumule** : ici, quand l'odométrie compte un tour, le robot n'a réellement tourné que d'environ 343°, et au bout de quelques mètres `odom` ne dit plus où est le robot dans la salle. Sans carte, le seul moyen de voir cette dérive est de **comparer ce que voit le capteur** à ce que dit l'odométrie : les murs, fixes en réalité, se décalent dans le repère `odom`. C'est exactement ce que fera le SLAM en partie 3.
 
-**Point de contrôle 2.** `tf2_echo base_footprint base_scan` donne la translation `[-0.032, 0.000, 0.182]` ; scan visible ; l'écart entre l'odométrie et la réalité observé après le carré.
+**Point de contrôle 2.** `tf2_echo base_footprint base_scan` donne la translation `[-0.032, 0.000, 0.182]` ; scan visible ; après un tour « odométrique », les murs vus à la fin sont tournés d'environ 17° par rapport à ceux du début (ils se superposent avec `derive:=false`).
 
 ---
 
@@ -240,15 +245,15 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 **Pistes.** Avant de cartographier, regardez avec `ros2 run tf2_ros tf2_echo map odom` ce que vaut `map → odom` au départ, puis après quelques mètres. Regardez `view_frames` : qui publie `map → odom` ? Remplissez la ligne 3 du tableau.
 
-Cartographiez tout l'atelier. Conseils des anciens workshops : **lentement** (vitesse 0,15 m/s), tournez puis avancez plutôt que les deux à la fois, ne collez pas les murs, et **fermez les boucles** en repassant par des endroits déjà vus. Les deux alcôves du haut et le couloir étroit en haut à droite font partie de l'atelier.
+Cartographiez tout l'atelier. Conseils : **lentement** (vitesse 0,15 m/s), tournez puis avancez plutôt que les deux à la fois, ne collez pas les murs, et **fermez les boucles** en repassant par des endroits déjà vus. Les deux alcôves du haut et le couloir étroit en haut à droite font partie de l'atelier.
 
 **À retenir.** Avec l'odométrie seule, la dérive ferait apparaître des murs dédoublés et des pièces déformées. slam_toolbox **recale** chaque scan sur les précédents (scan matching) et, quand le robot revient dans un lieu connu, corrige d'un coup toute la trajectoire (fermeture de boucle). La correction est portée par `map → odom` : l'odométrie reste continue, c'est `map → odom` qui « saute ».
 
 ### 3.2 La grille d'occupation
 
-**Q10 — Avant d'ouvrir.** Dans l'image qui va être sauvegardée, quelles valeurs de pixel représentent libre, occupé, inconnu ? Que représente `origin` dans le YAML ? Combien de mètres fait l'image ?
+**Q10 — Avant d'ouvrir.** Dans l'image qui va être sauvegardée, quelles couleurs de pixel représentent un espace libre, occupé, inconnu ? Que représente l'`origine` du carte ? Quelle taille fait l'atelier ? Quelle taille fera l'image.
 
-**Manipulation.** Depuis le dossier `nav_ws/src/tb3_livreur` (le délai de 15 s laisse le temps à `map_saver` de recevoir la carte, publiée toutes les 2 s) :
+**Manipulation.** Aller dans le dossier `nav_ws/src/tb3_livreur` via la commande cd (le délai de 15 s laisse le temps à `map_saver` de recevoir la carte, publiée toutes les 2 s) :
 
 ```powershell
 ros2 run nav2_map_server map_saver_cli -f maps/atelier --ros-args -p save_map_timeout:=15.0
@@ -258,9 +263,9 @@ Deux fichiers : `maps/atelier.pgm` et `maps/atelier.yaml`. Ouvrez le YAML dans V
 
 **Pistes.** Mesurez la largeur de l'image en pixels et multipliez par `resolution`. Repérez la **table** près du départ : le lidar n'en voit que les pieds. Que verra Nav2 ?
 
-**Manipulation.** Retouchez la carte : effacez un artefact s'il y en a, et **dessinez en noir** le rectangle de la table (ce que le lidar ne voit pas mais que le robot ne doit pas traverser). Enregistrez en PGM, puis reconstruisez (`colcon build`) pour que la carte soit installée.
+**Manipulation.** Retouchez la carte sur GIMP (ou autre éditeur de PGM) si vous voulez: effacez un artefact s'il y en a, et **dessinez en noir** le rectangle de la table (ce que le lidar ne voit pas mais que le robot ne doit pas traverser). Enregistrez en PGM, puis reconstruisez (`colcon build`) pour que la carte soit installée.
 
-**À retenir.** La carte est une image : 0 = occupé (noir), 254 = libre (blanc), 205 = inconnu (gris) ; `origin` est la position, dans le repère `map`, du coin **bas-gauche** de l'image. La carte est un **fichier comme un autre** : on peut la corriger à la main pour interdire une zone.
+**À retenir.** La carte est une image en niveaux de gris : 0 = occupé (noir), 254 = libre (blanc), 205 = inconnu (gris) ; `origin` est la position, dans le repère `map`, du coin **bas-gauche** de l'image. La carte est un **fichier image comme un autre** : on peut la corriger à la main pour interdire une zone ou corriger des défauts.
 
 **Point de contrôle 3.** `maps/atelier.pgm` fermé (pas de mur ouvert), les quatre zones (cellule, alcôves, couloir, machines) visibles, table dessinée. *En cas de problème, une carte de secours est fournie : `maps/atelier_secours.yaml`.* Une carte complète ressemble à ceci (avant retouche, les étagères et les machines ne sont vues que par leurs faces) :
 
@@ -270,7 +275,7 @@ Deux fichiers : `maps/atelier.pgm` et `maps/atelier.yaml`. Ouvrez le YAML dans V
 
 ## Partie 4 — Se localiser (50 min)
 
-La carte est faite. On arrête le SLAM et on le remplace par **AMCL** (Adaptive Monte Carlo Localization) : un filtre à particules qui compare le scan à la carte pour estimer la pose du robot.
+La carte est faite. On arrête le SLAM et on le remplace par **AMCL** (Adaptive Monte Carlo Localization) : un algorithme particulaire qui compare le scan à la carte pour estimer la pose du robot.
 
 ### 4.1 Deux autorités pour une transformation
 
@@ -511,8 +516,7 @@ Coordonnées utiles (repère `map`, robot au départ en (0, 0)) : la cellule est
 
 ## Dépannage
 
-- **Pas de scan dans RViz, et le simulateur affiche `Pas de scan : transformation base_footprint -> base_scan introuvable`** : le modèle ne déclare pas `base_scan` ou `robot_state_publisher` a refusé l'URDF (erreur dans le terminal).
-- **`robot_state_publisher` meurt au lancement avec `Failed to find root link: Two root links found`** (ou un lien qui a deux parents) : un `<link>` n'est l'enfant d'aucun `<joint>`, ou un `parent`/`child` est inversé. L'URDF doit rester un arbre à une seule racine, `base_footprint`.
+- **Pas de scan dans RViz, et le simulateur affiche `Pas de scan : transformation base_footprint -> base_scan introuvable`** : le modèle ne déclare pas `base_scan` (partie 2 non faite) ou `robot_state_publisher` a refusé l'URDF (erreur dans le terminal).
 - **`xacro` se plaint** : une balise mal fermée ou une propriété inconnue ; le message donne la ligne.
 - **RViz affiche `Fixed Frame [map] does not exist`** : personne ne publie `map → odom` : pas de SLAM ni d'AMCL actif, ou AMCL attend la pose initiale.
 - **La carte ne s'affiche pas dans RViz alors que `ros2 topic info /map -v` montre un publieur** : question de QoS. `map_server` publie la carte **une seule fois**, avec la durabilité `Transient Local` (le message est conservé pour les abonnés qui arrivent après). Un affichage `Map` ajouté à la main dans RViz est en `Volatile` : il ne reçoit rien tant que personne ne republie. Dans le panneau Displays, ouvrez `Map → Topic` et mettez `Durability Policy` à `Transient Local` (les fichiers `.rviz` fournis le font déjà). Même règle pour `/global_costmap/costmap`. À l'inverse, `/scan` est publié en `Best Effort` : un abonné `Reliable` ne le recevra pas.
