@@ -21,6 +21,9 @@ nav-pdf = "pixi exec -s python=3.12 -s markdown python outils/md_vers_pdf.py nav
 # Charge les overlays demo_ws + nav_ws puis lance cours_ros2_demo/cours.launch.py.
 # Prerequis : pixi run build et pixi run nav-build (une fois, ou apres une modification).
 cours = "python outils/cours.py"
+# Mini TP « Decouverte de Nav2 » : pixi run decouverte etape:=odometrie|slam|navigation
+decouverte = "python outils/cours.py --launch decouverte.launch.py"
+decouverte-pdf = "pixi exec -s python=3.12 -s markdown python outils/md_vers_pdf.py nav_ws/MiniTP_decouverte_nav2.md"
 
 # --- Taches dependant de l'OS : ouvrent un terminal avec ROS 2 (pixi) + l'overlay charge ---
 # (taper 'exit' pour quitter)
