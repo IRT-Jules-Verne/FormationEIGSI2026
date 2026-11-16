@@ -76,22 +76,31 @@ TROUS = {
         ('    laser_max_range: 3.5            # portée du LDS-01\n',
          '    laser_max_range: 0.0            # >>> À COMPLÉTER 6 : portée du LDS-01 (m)\n'),
         ('    min_particles: 500\n    max_particles: 2000\n',
-         '    min_particles: 0                # >>> À COMPLÉTER 6 : quelques centaines\n'
-         '    max_particles: 0                # >>> À COMPLÉTER 6 : quelques milliers\n'),
+         '    min_particles: 0                # >>> À COMPLÉTER 6 : quelques centaines (nuage concentré)\n'
+         '    max_particles: 0                # >>> À COMPLÉTER 6 : quelques milliers (nuage étalé)\n'),
         ('    update_min_d: 0.2               # mise à jour après 20 cm parcourus...\n'
          '    update_min_a: 0.2               # ... ou 0,2 rad tournés\n',
-         '    update_min_d: 0.0               # >>> À COMPLÉTER 6 : mise à jour après N m parcourus...\n'
-         '    update_min_a: 0.0               # >>> À COMPLÉTER 6 : ... ou N rad tournés\n'),
+         '    update_min_d: 0.0               # >>> À COMPLÉTER 6 : distance (m), de l\'ordre d\'une à deux\n'
+         '                                    #     longueurs de robot...\n'
+         '    update_min_a: 0.0               # >>> À COMPLÉTER 6 : ... ou angle (rad), de l\'ordre de 10 à 20°\n'),
     ],
     'launch/4_localisation.launch.py': [
         ("NOEUDS_LOCALISATION = ['map_server', 'amcl']\n",
-         "NOEUDS_LOCALISATION = []  # >>> À COMPLÉTER 7 : les deux nœuds, dans l'ordre de démarrage\n"),
+         "# >>> À COMPLÉTER 7 : une liste Python de chaînes : les noms (argument name=) des deux\n"
+         "# nœuds lancés plus bas, sous le commentaire « Les deux nœuds à cycle de vie ».\n"
+         "# Le lifecycle manager les configure puis les active dans l'ordre de la liste :\n"
+         "# celui qui fournit une donnée avant celui qui en a besoin.\n"
+         "# Forme attendue : ['nom_1', 'nom_2']\n"
+         "NOEUDS_LOCALISATION = []\n"),
     ],
     'config/nav2.yaml': [
         ('      xy_goal_tolerance: 0.15\n      yaw_goal_tolerance: 0.25\n      stateful: true\n',
          '      xy_goal_tolerance: 0.0        # >>> À COMPLÉTER 8 : tolérance d\'arrivée en position (m)\n'
          '      yaw_goal_tolerance: 0.0       # >>> À COMPLÉTER 8 : tolérance d\'arrivée en orientation (rad)\n'
          '      stateful: true\n'),
+        ('      xy_goal_tolerance: 0.15\n      trans_stopped_velocity',
+         '      xy_goal_tolerance: 0.0   # >>> À COMPLÉTER 8 : la même que celle du goal_checker\n'
+         '      trans_stopped_velocity'),
         ('      max_vel_x: 0.22          # limite du Burger (m/s)\n',
          '      max_vel_x: 0.0           # >>> À COMPLÉTER 8 : vitesse linéaire maximale du Burger (m/s)\n'),
         ('      max_vel_theta: 2.84      # limite du Burger (rad/s)\n',
@@ -100,17 +109,18 @@ TROUS = {
          '      max_speed_xy: 0.0        # >>> À COMPLÉTER 8 : comme max_vel_x\n'),
         ('      global_frame: odom            # repère continu : pas de saut quand AMCL corrige\n'
          '      robot_base_frame: base_footprint\n      rolling_window: true\n',
-         '      global_frame: A_COMPLETER     # >>> À COMPLÉTER 8 : un repère continu, sans saut\n'
+         '      global_frame: A_COMPLETER     # >>> À COMPLÉTER 8 : un repère fixe dans la salle à court\n'
+         '                                    #     terme et continu (sans saut quand AMCL corrige)\n'
          '      robot_base_frame: A_COMPLETER # >>> À COMPLÉTER 8 : le repère du robot au sol\n'
          '      rolling_window: true\n'),
         ('      robot_radius: 0.12            # rayon englobant du Burger\n',
-         '      robot_radius: 0.0             # >>> À COMPLÉTER 8 : rayon englobant du Burger (m), avec marge\n'),
+         '      robot_radius: 0.0             # >>> À COMPLÉTER 8 : rayon du cercle englobant le Burger (m), voir Q16\n'),
         ('      global_frame: map\n      robot_base_frame: base_footprint\n      robot_radius: 0.12\n',
          '      global_frame: A_COMPLETER     # >>> À COMPLÉTER 8 : le repère de la carte\n'
          '      robot_base_frame: A_COMPLETER # >>> À COMPLÉTER 8\n'
          '      robot_radius: 0.0             # >>> À COMPLÉTER 8 : comme la costmap locale\n'),
         ('        inflation_radius: 0.35\n',
-         '        inflation_radius: 0.0         # >>> À COMPLÉTER 8 : portée du coût autour des obstacles (m)\n'),
+         '        inflation_radius: 0.0         # >>> À COMPLÉTER 8 : portée du coût (m) : 2 à 3 fois robot_radius\n'),
         ('        inflation_radius: 0.35      # m : au-delà, coût nul ; en dessous, coût décroissant\n',
          '        inflation_radius: 0.0       # >>> À COMPLÉTER 8 : même valeur que la costmap locale\n'),
         ('    max_velocity: [0.22, 0.0, 2.84]\n    min_velocity: [-0.22, 0.0, -2.84]\n',
@@ -122,8 +132,11 @@ TROUS = {
                          'behavior_server', 'bt_navigator', 'waypoint_follower',
                          'velocity_smoother']
 """,
-         """    # >>> À COMPLÉTER 9 : les sept serveurs lancés ci-dessous, dans l'ordre de démarrage
-    # (le contrôleur et ses costmaps d'abord, le bt_navigator après ceux qu'il appelle)
+         """    # >>> À COMPLÉTER 9 : une liste Python de chaînes : les noms (argument name=) des sept
+    # Node(...) lancés plus bas, sous le commentaire « Les serveurs Nav2 ».
+    # Ordre de démarrage : le contrôleur (et sa costmap locale) d'abord, le bt_navigator après
+    # les serveurs qu'il appelle, le velocity_smoother en dernier. L'ordre des Node(...) dans
+    # le fichier convient. Forme attendue : ['nom_1', 'nom_2', ...]
     noeuds_navigation = []
 """),
     ],

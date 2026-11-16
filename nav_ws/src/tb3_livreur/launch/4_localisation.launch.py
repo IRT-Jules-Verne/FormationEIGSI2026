@@ -85,6 +85,7 @@ def generate_launch_description():
             launch_arguments=dict({a: LaunchConfiguration(a) for a in ARGS_ROBOT},
                                   rviz='false').items())]),
 
+        # Les deux nœuds à cycle de vie de la localisation
         Node(package='nav2_map_server', executable='map_server', name='map_server',
              output='screen', parameters=[{'yaml_filename': carte}]),
 

@@ -73,6 +73,7 @@ def generate_launch_description():
                                   scan_topic=scan_topic, scan_yaw=scan_yaw,
                                   amcl_gere=amcl_gere, rviz='false').items())]),
 
+        # Les serveurs Nav2 : sept nœuds à cycle de vie, à activer par le lifecycle manager
         Node(package='nav2_controller', executable='controller_server', name='controller_server',
              output='screen', parameters=[params],
              remappings=[('cmd_vel', 'cmd_vel_nav')]),
