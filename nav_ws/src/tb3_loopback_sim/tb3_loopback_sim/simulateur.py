@@ -14,9 +14,10 @@ Différences pédagogiques avec l'original :
   - la transformation map -> odom n'est PAS publiée par défaut : c'est le rôle du SLAM
     ou d'AMCL. Le simulateur garde la vérité terrain pour calculer le scan.
 
-Le scan est calculé par lancer de rayons dans le monde, depuis la pose du lidar obtenue
+Le scan est calculé par lancer de rayons dans le monde, depuis la position du lidar obtenue
 avec TF (base_footprint -> base_scan) : si le modèle du robot ne déclare pas base_scan,
-il n'y a pas de scan.
+il n'y a pas de scan. Son orientation, elle, est celle du capteur réel (scan_yaw_reel) et
+non celle de l'URDF : un lidar déclaré à l'envers dans le modèle se voit dans RViz.
 """
 
 import math
@@ -122,6 +123,9 @@ class Simulateur(Node):
             ('scan_portee_min', 0.12),
             ('scan_portee_max', 3.5),
             ('scan_bruit', 0.005),
+            # Orientation PHYSIQUE du lidar sur le robot (rad). Elle ne vient pas de TF : si
+            # l'URDF déclare le lidar tourné (scan_yaw), le capteur réel, lui, ne tourne pas.
+            ('scan_yaw_reel', 0.0),
             # Roues (pour /joint_states) : rayon et entraxe du Burger
             ('roue_rayon', 0.033),
             ('roue_entraxe', 0.160),
@@ -152,6 +156,7 @@ class Simulateur(Node):
         self.scan_portee_min = float(prm['scan_portee_min'])
         self.scan_portee_max = float(prm['scan_portee_max'])
         self.scan_bruit = float(prm['scan_bruit'])
+        self.scan_yaw_reel = float(prm['scan_yaw_reel'])
         self.roue_rayon = float(prm['roue_rayon'])
         self.roue_entraxe = float(prm['roue_entraxe'])
         self.joint_gauche = prm['joint_gauche']
@@ -368,7 +373,12 @@ class Simulateur(Node):
     # ------------------------------------------------------------------ lidar
 
     def chercher_pose_du_lidar(self):
-        """Lit base_footprint -> base_scan dans TF (publiée par robot_state_publisher)."""
+        """Position du lidar : base_footprint -> base_scan dans TF (robot_state_publisher).
+
+        Seule la translation vient de TF. L'orientation est celle du capteur réel
+        (paramètre scan_yaw_reel) : si on la prenait dans TF, un lidar déclaré à l'envers
+        dans l'URDF tournerait aussi dans la simulation, et l'erreur ne se verrait pas.
+        """
         try:
             t = self.tf_buffer.lookup_transform(self.base_frame, self.scan_frame,
                                                 rclpy.time.Time())
@@ -378,8 +388,8 @@ class Simulateur(Node):
                 f'introuvable ({type(e).__name__}). Le modele du robot est-il lance ?',
                 throttle_duration_sec=5.0)
             return None
-        tr, rot = t.transform.translation, t.transform.rotation
-        self.pose_base_vers_scan = Pose2D(tr.x, tr.y, yaw_depuis_quaternion(rot))
+        tr = t.transform.translation
+        self.pose_base_vers_scan = Pose2D(tr.x, tr.y, self.scan_yaw_reel)
         return self.pose_base_vers_scan
 
     def publier_scan(self):
