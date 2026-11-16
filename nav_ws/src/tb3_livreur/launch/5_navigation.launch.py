@@ -46,9 +46,9 @@ def generate_launch_description():
     sortie_smoother = PythonExpression(["'cmd_vel_lisse' if '", panne, "' == '3' else 'cmd_vel'"])
     scan_yaw = PythonExpression(["'3.14159' if '", panne, "' == '4' else '0.0'"])
 
-    noeuds_navigation = ['controller_server', 'smoother_server', 'planner_server',
-                         'behavior_server', 'bt_navigator', 'waypoint_follower',
-                         'velocity_smoother']
+    # >>> À COMPLÉTER 9 : les sept serveurs lancés ci-dessous, dans l'ordre de démarrage
+    # (le contrôleur et ses costmaps d'abord, le bt_navigator après ceux qu'il appelle)
+    noeuds_navigation = []
 
     return LaunchDescription([
         DeclareLaunchArgument('carte', default_value=os.path.join(dossier, 'maps', 'atelier.yaml')),

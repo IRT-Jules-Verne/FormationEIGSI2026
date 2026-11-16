@@ -87,13 +87,13 @@
   </xacro:macro>
 
   <xacro:roue prefixe="left"  y="${roue_entraxe / 2}"/>
-  <xacro:roue prefixe="right" y="${-roue_entraxe / 2}"/>
+  <!-- >>> À COMPLÉTER 1 : l appel de la macro pour la roue droite (voir la roue gauche) -->
 
   <!-- ===== Roulette arrière ===== -->
   <joint name="caster_back_joint" type="fixed">
     <parent link="base_link"/>
     <child link="caster_back_link"/>
-    <origin xyz="-0.081 0 -0.004" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>  <!-- >>> À COMPLÉTER 2 : 81 mm derrière le centre, 4 mm sous base_link -->
   </joint>
   <link name="caster_back_link">
     <visual>
@@ -116,11 +116,9 @@
   <!-- Le lidar est posé sur le dessus du châssis, légèrement en arrière du centre. Le repère
        base_scan est le repère dans lequel le message /scan exprime ses distances : chaque
        rayon part de son origine, l'angle 0 est son axe x. -->
-  <joint name="scan_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="base_scan"/>
-    <origin xyz="-0.032 0 0.172" rpy="0 0 $(arg scan_yaw)"/>
-  </joint>
+  <!-- >>> À COMPLÉTER 3 : le joint fixe « scan_joint », de base_link vers base_scan,
+       d'origine xyz="-0.032 0 0.172" et rpy="0 0 $(arg scan_yaw)" (sur le modèle de imu_joint).
+       Tant qu'il manque, le lien base_scan n'est rattaché à rien : pas de TF, donc pas de scan. -->
   <link name="base_scan">
     <visual>
       <origin xyz="0 0 -0.010" rpy="0 0 0"/>

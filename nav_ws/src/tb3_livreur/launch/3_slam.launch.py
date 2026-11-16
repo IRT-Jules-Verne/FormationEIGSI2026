@@ -49,9 +49,9 @@ def generate_launch_description():
             launch_arguments=dict({a: LaunchConfiguration(a) for a in ARGS_ROBOT},
                                   rviz='false').items())]),
 
-        Node(package='slam_toolbox', executable='async_slam_toolbox_node',
-             name='slam_toolbox', output='screen',
-             parameters=[LaunchConfiguration('params_slam')]),
+        # >>> À COMPLÉTER 5 : le nœud de cartographie, sur le modèle du nœud rviz2 ci-dessous :
+        #   package 'slam_toolbox', exécutable 'async_slam_toolbox_node', nom 'slam_toolbox',
+        #   output='screen', parameters=[LaunchConfiguration('params_slam')]
 
         Node(package='rviz2', executable='rviz2', name='rviz2',
              arguments=['-d', os.path.join(dossier, 'rviz', 'slam.rviz')],

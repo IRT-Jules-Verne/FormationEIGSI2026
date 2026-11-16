@@ -97,8 +97,8 @@ controller_server:
     # Est-on arrivé ? tolérances en position (m) et en orientation (rad)
     goal_checker:
       plugin: nav2_controller::SimpleGoalChecker
-      xy_goal_tolerance: 0.15
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.0        # >>> À COMPLÉTER 8 : tolérance d'arrivée en position (m)
+      yaw_goal_tolerance: 0.0       # >>> À COMPLÉTER 8 : tolérance d'arrivée en orientation (rad)
       stateful: true
     # DWB : échantillonne des vitesses, simule des trajectoires courtes, note avec des critics
     FollowPath:
@@ -106,11 +106,11 @@ controller_server:
       debug_trajectory_details: true
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 0.22          # limite du Burger (m/s)
+      max_vel_x: 0.0           # >>> À COMPLÉTER 8 : vitesse linéaire maximale du Burger (m/s)
       max_vel_y: 0.0           # robot différentiel : pas de translation latérale
-      max_vel_theta: 2.84      # limite du Burger (rad/s)
+      max_vel_theta: 0.0       # >>> À COMPLÉTER 8 : vitesse angulaire maximale du Burger (rad/s)
       min_speed_xy: 0.0
-      max_speed_xy: 0.22
+      max_speed_xy: 0.0        # >>> À COMPLÉTER 8 : comme max_vel_x
       min_speed_theta: 0.0
       acc_lim_x: 2.5
       acc_lim_y: 0.0
@@ -148,20 +148,20 @@ local_costmap:
       use_sim_time: false
       update_frequency: 5.0
       publish_frequency: 2.0
-      global_frame: odom            # repère continu : pas de saut quand AMCL corrige
-      robot_base_frame: base_footprint
+      global_frame: A_COMPLETER     # >>> À COMPLÉTER 8 : un repère continu, sans saut
+      robot_base_frame: A_COMPLETER # >>> À COMPLÉTER 8 : le repère du robot au sol
       rolling_window: true
       width: 3                      # m
       height: 3                     # m
       resolution: 0.05
-      robot_radius: 0.12            # rayon englobant du Burger
+      robot_radius: 0.0             # >>> À COMPLÉTER 8 : rayon englobant du Burger (m), avec marge
       plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
         plugin: nav2_costmap_2d::ObstacleLayer
         enabled: true
         observation_sources: scan
         scan:
-          topic: /scan
+          topic: A_COMPLETER        # >>> À COMPLÉTER 8 : le topic du lidar
           max_obstacle_height: 2.0
           clearing: true            # les rayons libèrent les cellules traversées
           marking: true             # les impacts marquent des obstacles
@@ -173,7 +173,7 @@ local_costmap:
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
         cost_scaling_factor: 3.0
-        inflation_radius: 0.35
+        inflation_radius: 0.0         # >>> À COMPLÉTER 8 : portée du coût autour des obstacles (m)
       always_send_full_costmap: true
 
 # ====================== Costmap globale : toute la carte ======================
@@ -183,9 +183,9 @@ global_costmap:
       use_sim_time: false
       update_frequency: 1.0
       publish_frequency: 1.0
-      global_frame: map
-      robot_base_frame: base_footprint
-      robot_radius: 0.12
+      global_frame: A_COMPLETER     # >>> À COMPLÉTER 8 : le repère de la carte
+      robot_base_frame: A_COMPLETER # >>> À COMPLÉTER 8
+      robot_radius: 0.0             # >>> À COMPLÉTER 8 : comme la costmap locale
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
@@ -197,7 +197,7 @@ global_costmap:
         enabled: true
         observation_sources: scan
         scan:
-          topic: /scan
+          topic: A_COMPLETER        # >>> À COMPLÉTER 8 : le topic du lidar
           max_obstacle_height: 2.0
           clearing: true
           marking: true
@@ -209,7 +209,7 @@ global_costmap:
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
         cost_scaling_factor: 3.0
-        inflation_radius: 0.35      # m : au-delà, coût nul ; en dessous, coût décroissant
+        inflation_radius: 0.0       # >>> À COMPLÉTER 8 : même valeur que la costmap locale
       always_send_full_costmap: true
 
 # ====================== Planification globale ======================
@@ -276,8 +276,8 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: OPEN_LOOP
-    max_velocity: [0.22, 0.0, 2.84]
-    min_velocity: [-0.22, 0.0, -2.84]
+    max_velocity: [0.0, 0.0, 0.0]    # >>> À COMPLÉTER 8 : [vx, vy, vtheta] maximales du Burger
+    min_velocity: [0.0, 0.0, 0.0]    # >>> À COMPLÉTER 8 : les mêmes, négatives
     max_accel: [2.5, 0.0, 3.2]
     max_decel: [-2.5, 0.0, -3.2]
     odom_topic: odom

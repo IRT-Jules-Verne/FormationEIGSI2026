@@ -5,16 +5,16 @@ amcl:
     use_sim_time: false
 
     # --- Repères et topics ---
-    base_frame_id: base_footprint   # le robot
-    odom_frame_id: odom             # publié par l'odométrie
-    global_frame_id: map            # la carte ; AMCL publie map -> odom
-    scan_topic: scan
+    base_frame_id: A_COMPLETER      # >>> À COMPLÉTER 6 : le repère du robot
+    odom_frame_id: A_COMPLETER      # >>> À COMPLÉTER 6 : le repère de l'odométrie
+    global_frame_id: A_COMPLETER    # >>> À COMPLÉTER 6 : le repère de la carte
+    scan_topic: A_COMPLETER         # >>> À COMPLÉTER 6
     tf_broadcast: true              # false : AMCL estime mais ne publie pas map -> odom
     transform_tolerance: 1.0
 
     # --- Modèle du lidar ---
     laser_model_type: likelihood_field
-    laser_max_range: 3.5            # portée du LDS-01
+    laser_max_range: 0.0            # >>> À COMPLÉTER 6 : portée du LDS-01 (m)
     laser_min_range: -1.0           # -1 : utiliser range_min du message
     max_beams: 60                   # rayons utilisés par mise à jour (sur 360)
     laser_likelihood_max_dist: 2.0
@@ -27,8 +27,8 @@ amcl:
     do_beamskip: false
 
     # --- Filtre à particules ---
-    min_particles: 500
-    max_particles: 2000
+    min_particles: 0                # >>> À COMPLÉTER 6 : quelques centaines
+    max_particles: 0                # >>> À COMPLÉTER 6 : quelques milliers
     pf_err: 0.05
     pf_z: 0.99
     resample_interval: 1
@@ -42,8 +42,8 @@ amcl:
     alpha3: 0.2                     # bruit de translation dû à la translation
     alpha4: 0.2                     # bruit de translation dû à la rotation
     alpha5: 0.2
-    update_min_d: 0.2               # mise à jour après 20 cm parcourus...
-    update_min_a: 0.2               # ... ou 0,2 rad tournés
+    update_min_d: 0.0               # >>> À COMPLÉTER 6 : mise à jour après N m parcourus...
+    update_min_a: 0.0               # >>> À COMPLÉTER 6 : ... ou N rad tournés
 
     # --- Pose initiale : donnée dans RViz (topic /initialpose) ---
     set_initial_pose: false

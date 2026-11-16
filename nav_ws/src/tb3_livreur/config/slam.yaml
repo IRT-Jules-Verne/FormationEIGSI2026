@@ -3,16 +3,16 @@
 slam_toolbox:
   ros__parameters:
     # --- Repères et topics : doivent correspondre au robot ---
-    odom_frame: odom              # publié par l'odométrie (simulateur ou vrai robot)
-    map_frame: map                # le repère que slam_toolbox crée et publie (map -> odom)
-    base_frame: base_footprint    # le repère du robot au sol
-    scan_topic: /scan
-    mode: mapping                 # mapping : on construit la carte ; localization : carte figée
+    odom_frame: A_COMPLETER       # >>> À COMPLÉTER 4 : le repère publié par l'odométrie
+    map_frame: A_COMPLETER        # >>> À COMPLÉTER 4 : le repère que slam_toolbox crée
+    base_frame: A_COMPLETER       # >>> À COMPLÉTER 4 : le repère du robot au sol
+    scan_topic: A_COMPLETER       # >>> À COMPLÉTER 4 : le topic du lidar
+    mode: A_COMPLETER             # >>> À COMPLÉTER 4 : mapping (on construit la carte) ou localization
     use_sim_time: false
 
     # --- Lidar et carte ---
     resolution: 0.05              # taille d'une cellule de la carte (m)
-    max_laser_range: 3.5          # portée du LDS-01 (m) ; les rayons plus longs sont ignorés
+    max_laser_range: 0.0          # >>> À COMPLÉTER 4 : portée du LDS-01 (m)
     min_laser_range: 0.0
     map_update_interval: 2.0      # période de publication de /map (s)
 

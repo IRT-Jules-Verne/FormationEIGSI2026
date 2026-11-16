@@ -28,7 +28,7 @@ ARGS_ROBOT = ['sim', 'urdf', 'robot', 'x', 'y', 'yaw', 'derive', 'publier_monde'
 
 # Nœuds à cycle de vie pilotés par le lifecycle manager, dans l'ordre de démarrage :
 # d'abord la carte, puis la localisation qui en a besoin.
-NOEUDS_LOCALISATION = ['map_server', 'amcl']
+NOEUDS_LOCALISATION = []  # >>> À COMPLÉTER 7 : les deux nœuds, dans l'ordre de démarrage
 
 
 def gestion_du_cycle_de_vie(context):
