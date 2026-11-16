@@ -123,9 +123,12 @@ def main():
     for ws in ('demo_ws', 'nav_ws'):
         charger_overlay(ws)
     arguments = sys.argv[1:]
-    if not any(a.startswith('demo:=') for a in arguments):
+    fichier = 'cours.launch.py'
+    if len(arguments) >= 2 and arguments[0] == '--launch':
+        fichier, arguments = arguments[1], arguments[2:]
+    elif not any(a.startswith('demo:=') for a in arguments):
         arguments.append('demo:=liste')
-    commande = ['ros2', 'launch', 'cours_ros2_demo', 'cours.launch.py'] + arguments
+    commande = ['ros2', 'launch', 'cours_ros2_demo', fichier] + arguments
     print('>', ' '.join(commande))
     sys.exit(executer(commande))
 

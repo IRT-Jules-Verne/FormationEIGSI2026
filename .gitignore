@@ -21,3 +21,6 @@ vieux_worksop/
 # Sorties de view_frames
 frames_*.pdf
 frames_*.gv
+
+# Cartes produites par les etudiants (mini TP et TP navigation)
+nav_ws/ma_carte.*
