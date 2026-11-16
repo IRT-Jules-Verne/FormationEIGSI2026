@@ -46,8 +46,11 @@ def generate_launch_description():
     sortie_smoother = PythonExpression(["'cmd_vel_lisse' if '", panne, "' == '3' else 'cmd_vel'"])
     scan_yaw = PythonExpression(["'3.14159' if '", panne, "' == '4' else '0.0'"])
 
-    # >>> À COMPLÉTER 9 : les sept serveurs lancés ci-dessous, dans l'ordre de démarrage
-    # (le contrôleur et ses costmaps d'abord, le bt_navigator après ceux qu'il appelle)
+    # >>> À COMPLÉTER 9 : une liste Python de chaînes : les noms (argument name=) des sept
+    # Node(...) lancés plus bas, sous le commentaire « Les serveurs Nav2 ».
+    # Ordre de démarrage : le contrôleur (et sa costmap locale) d'abord, le bt_navigator après
+    # les serveurs qu'il appelle, le velocity_smoother en dernier. L'ordre des Node(...) dans
+    # le fichier convient. Forme attendue : ['nom_1', 'nom_2', ...]
     noeuds_navigation = []
 
     return LaunchDescription([
@@ -73,6 +76,7 @@ def generate_launch_description():
                                   scan_topic=scan_topic, scan_yaw=scan_yaw,
                                   amcl_gere=amcl_gere, rviz='false').items())]),
 
+        # Les serveurs Nav2 : sept nœuds à cycle de vie, à activer par le lifecycle manager
         Node(package='nav2_controller', executable='controller_server', name='controller_server',
              output='screen', parameters=[params],
              remappings=[('cmd_vel', 'cmd_vel_nav')]),

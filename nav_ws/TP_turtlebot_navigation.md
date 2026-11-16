@@ -277,13 +277,25 @@ Deux fichiers : `maps/atelier.pgm` et `maps/atelier.yaml`. Ouvrez le YAML dans V
 
 La carte est faite. On arrête le SLAM et on le remplace par **AMCL** (Adaptive Monte Carlo Localization) : un algorithme particulaire qui compare le scan à la carte pour estimer la pose du robot.
 
+Dans les parties 4 à 7, on utilise la carte fournie (`maps/atelier`). Le plan ci-dessous situe ce qu'il y a dans l'atelier ; les positions des lieux de livraison sont approximatives, vous les relèverez précisément dans RViz en partie 7.
+
+![Plan de l'atelier MecaTri sur la carte fournie](images/plan_atelier.png)
+
 ### 4.1 Deux autorités pour une transformation
 
 **Q11 — Avant de lancer.** Peut-on lancer SLAM et AMCL en même temps ? Que se passerait-il sur `map → odom` ?
 
 **Pistes.** Lancez `3_slam.launch.py` et, dans un autre terminal, `4_localisation.launch.py` (ci-dessous). Regardez `view_frames` et `tf2_echo map odom` pendant quelques secondes. Arrêtez ensuite le SLAM **pour de bon**.
 
-**Manipulation.** Complétez `config/amcl.yaml` (`>>> À COMPLÉTER 6` : repères, topic, portée du lidar, nombre de particules, seuils de mise à jour) et `launch/4_localisation.launch.py` (`>>> À COMPLÉTER 7` : la liste `node_names` du lifecycle manager). Reconstruisez, puis :
+**Manipulation.** Complétez `config/amcl.yaml` (`>>> À COMPLÉTER 6`) :
+
+- les **repères** et le **topic** : ce sont les mêmes que pour le SLAM (`slam.yaml`), et la portée du lidar est celle de Q5 ;
+- le **filtre à particules** : chaque particule est une pose possible du robot. À chaque mise à jour, AMCL déplace toutes les particules selon l'odométrie (en ajoutant du bruit), leur donne un poids selon l'accord entre le scan et la carte, puis retire les moins probables. Le nombre de particules s'adapte entre `min_particles` (nuage concentré, AMCL est sûr de lui) et `max_particles` (nuage étalé, il hésite) ;
+- les **seuils de mise à jour** : AMCL ne recalcule qu'après un déplacement minimal (`update_min_d` en m, `update_min_a` en rad). Les commentaires du fichier expliquent ce qui se passe si on choisit trop petit ou trop grand.
+
+Puis `launch/4_localisation.launch.py` (`>>> À COMPLÉTER 7`). `map_server` et `amcl` sont des nœuds Nav2 : ils démarrent **inactifs**, et c'est le `lifecycle_manager` qui les active un par un, dans l'ordre de la liste `NOEUDS_LOCALISATION`. Mettez-y les noms (argument `name=`) des deux nœuds lancés dans le fichier, en commençant par celui qui fournit une donnée dont l'autre a besoin (vous verrez en 4.2 ce qui se passe si on en oublie un).
+
+Reconstruisez, puis :
 
 ```powershell
 ros2 launch tb3_livreur 4_localisation.launch.py
@@ -332,9 +344,9 @@ ros2 service call /reinitialize_global_localization std_srvs/srv/Empty
 
 Téléopérez d'abord **sans sortir** de l'alcôve, puis sortez vers la cellule. Observez le nuage.
 
-**Q15 — Avant d'essayer.** Robot kidnappé : on le déplace sans prévenir AMCL (téléportation en `x: 9.8, y: 0.8`). Quelle information devient trompeuse ? Comment s'en remettre ?
+**Q15 — Avant d'essayer.** Robot kidnappé : on le déplace sans prévenir AMCL (téléportation en `x: 9.8, y: 0.8`). Quelle information devient trompeuse ? Qu'est ce qu'on peut faire pour récupérer une localisation ?
 
-**Pistes.** Après la téléportation, regardez le scan par rapport à la carte, puis `/amcl_pose`. Essayez : téléoper un peu ; relocalisation globale ; nouvelle pose initiale dans RViz. Qu'est-ce qui marche le plus vite ?
+**Pistes.** Après la téléportation, regardez le scan par rapport à la carte, puis `/amcl_pose`. Essayez : téléoper un peu pour faire converger les particules ; relocalisation globale ; nouvelle pose initiale dans RViz. Qu'est-ce qui marche le plus vite ?
 
 **À retenir.** Deux lieux identiques donnent le **même scan** : il faut une observation distinctive (sortir, voir un détail) pour lever l'ambiguïté. Un robot déplacé garde une estimation fausse et une odométrie qui prédit depuis cette estimation fausse : il faut **détecter** l'incohérence scan/carte et **réinitialiser** (pose initiale ou localisation globale). Une concentration de particules n'est pas une preuve de vérité.
 
@@ -348,11 +360,16 @@ Nav2 est un ensemble de **serveurs** spécialisés, coordonnés par un behavior 
 
 ### 5.1 Configurer le robot
 
-**Q16 — Avant de remplir.** Le Burger fait 138 mm de large et 178 mm de long. Quel rayon pour le cercle qui l'englobe ? Quelle marge ajouter ? Ses vitesses maximales sont 0,22 m/s et 2,84 rad/s. Et dans quel repère est la costmap locale, et pourquoi pas `map` ?
+**Q16 — Avant de remplir.** Le Burger fait 138 mm de large et 178 mm de long. Quel rayon pour le cercle qui l'englobe ? Quelle marge ajouter aux murs pour être sur de en pas toucher ? Ses vitesses maximales sont 0,22 m/s et 2,84 rad/s est-ce que celà a un impact ? Si oui sur quoi ?. Enfin, la costmap locale est une fenêtre de 3 m × 3 m qui suit le robot. Elle a besoin de deux repères : `robot_base_frame`, le robot, sur lequel la fenêtre se recentre ; et `global_frame`, le repère dans lequel ses cellules sont **fixées**. Pour `global_frame`, pourquoi pas `base_footprint` (pensez à ce qui arrive aux obstacles mémorisés quand le robot tourne) ? Et pourquoi pas `map` (pensez à ce qui arrive quand AMCL corrige la pose) ?
 
-**Manipulation.** Ouvrez `config/nav2.yaml` et complétez les `>>> À COMPLÉTER 8` : `robot_radius` (deux costmaps), `inflation_radius` (deux costmaps), vitesses maximales (contrôleur et `velocity_smoother`), repères (`global_frame`, `robot_base_frame`), le topic de la source d'observation `scan`, et les tolérances d'arrivée. Chaque valeur doit être **justifiée** en une ligne dans vos réponses.
+**Manipulation.** Ouvrez `config/nav2.yaml` et complétez les `>>> À COMPLÉTER 8` : `robot_radius` (deux costmaps), `inflation_radius` (deux costmaps), vitesses maximales (contrôleur et `velocity_smoother`), repères (`global_frame`, `robot_base_frame`), le topic de la source d'observation `scan`, et les tolérances d'arrivée. Chaque bloc du fichier commence par un commentaire qui explique le rôle des paramètres. Quelques repères :
 
-Complétez `launch/5_navigation.launch.py` (`>>> À COMPLÉTER 9` : la liste des sept serveurs gérés par le lifecycle manager). Reconstruisez, puis :
+- **`robot_radius`** : les cellules à moins de ce rayon d'un obstacle sont **interdites** au centre du robot. C'est votre réponse à Q16 ;
+- **`inflation_radius`** : autour de cette zone interdite, un coût qui diminue avec la distance. Le robot **préfère** rester loin des murs, sans que ce soit interdit. Il doit être plus grand que `robot_radius` (typiquement 2 à 3 fois plus) ;
+- **vitesses** : celles du Burger, dans le contrôleur (`FollowPath`) et dans le `velocity_smoother`, le dernier filtre avant `/cmd_vel` (`vy` reste à 0 : le robot ne se déplace pas de côté) ;
+- **tolérances d'arrivée** : trop grandes, le robot s'arrête loin du poste ; trop petites, plus fines que la précision de la localisation (quelques cm, quelques degrés), il oscille autour du but sans jamais le valider.
+
+Complétez `launch/5_navigation.launch.py` (`>>> À COMPLÉTER 9`) : comme au trou 7, la liste des noms des nœuds à activer. Ce sont les sept serveurs Nav2 lancés plus bas dans le même fichier, et leur ordre dans le fichier convient. Reconstruisez, puis :
 
 ```powershell
 ros2 launch tb3_livreur 5_navigation.launch.py
@@ -360,7 +377,7 @@ ros2 launch tb3_livreur 5_navigation.launch.py
 
 Tant que la pose initiale n'est pas donnée, le terminal répète `Timed out waiting for transform from base_footprint to map` : la costmap globale attend `map → odom`, donc AMCL, donc vous. Dans RViz : **2D Pose Estimate**, puis **Nav2 Goal** (ou l'outil *2D Goal Pose*) vers la cellule de tri (au centre, devant le convoyeur). Le robot y va.
 
-**À retenir.** Demi-diagonale du châssis : √(0,069² + 0,089²) ≈ 0,113 m, soit `robot_radius: 0.12`. La costmap locale est dans `odom` : un repère **continu**, sans les sauts de `map → odom`, pour que le contrôleur ne voie pas les obstacles bouger quand AMCL corrige.
+**À retenir.** Demi-diagonale du châssis : √(0,069² + 0,089²) ≈ 0,113 m, soit `robot_radius: 0.12`. La costmap locale **suit** le robot (`robot_base_frame: base_footprint`, `rolling_window: true`) mais ses cellules sont **fixées** dans `odom` (`global_frame: odom`). Pas dans `base_footprint` : la grille tournerait avec le robot, et chaque obstacle mémorisé devrait être recalculé à chaque mouvement. Pas dans `map` : quand AMCL corrige `map → odom`, la pose saute de quelques centimètres et les obstacles sembleraient bouger d'un coup sous le contrôleur. `odom` est **continu** : c'est le bon repère pour ce qui se passe dans les prochaines secondes autour du robot. La costmap globale, elle, est dans `map`, car le but est donné dans la salle.
 
 ### 5.2 Deux costmaps
 
@@ -380,7 +397,7 @@ ros2 param get /global_costmap/global_costmap plugins
 
 **Q18 — Avant de changer.** Le couloir entre les deux étagères (en haut à droite) fait 0,70 m dans l'atelier, et moins sur votre carte (les murs y font une cellule de plus de chaque côté, et le scan en direct ajoute encore les siens). Le robot passera-t-il avec `inflation_radius: 0.35` ? Avec `0.15` ? Et si `robot_radius` passait à 0,40 ? Quelle est la différence entre un **coût** et une cellule **létale** ?
 
-**Manipulation.** Envoyez un but au **poste B** (derrière le couloir, en haut à droite). Observez le chemin et la couleur du couloir dans la costmap globale. Puis, **à chaud** :
+**Manipulation.** Envoyez un but au **poste B** (derrière le couloir, en haut à droite). Observez le chemin et la couleur du couloir dans la costmap globale. Puis, **pendant le déplacement** :
 
 ```powershell
 ros2 param set /global_costmap/global_costmap inflation_layer.inflation_radius 0.15
@@ -453,7 +470,7 @@ ros2 launch tb3_livreur 5_navigation.launch.py panne:=1
 
 Faites de même pour `panne:=2`, `panne:=3` et, si vous avez le temps, `panne:=4`. Donnez la pose initiale, envoyez un but, observez. Commandes utiles : `ros2 topic list`, `ros2 topic info <topic> -v`, `ros2 lifecycle get <nœud>`, `ros2 run tf2_tools view_frames`, `ros2 run tf2_ros tf2_echo`, `ros2 topic echo --once`.
 
-**Q22.** Pour chaque panne : quelle est la variable modifiée, quelle commande l'a prouvé, et où faudrait-il la corriger (URDF, YAML, launch) ?
+**Q22.** Pour chaque panne : qu'est ce qui a été modifié, comment on l'aprouvé, et où faudrait-il la corriger (URDF, YAML, launch) ?
 
 **À retenir.** Ne changez pas le planificateur parce que le robot ne bouge pas. Vérifiez d'abord que le but est accepté, que les nœuds sont actifs, que les données arrivent (publieurs **et** abonnés sur le bon topic, bons repères), puis seulement les réglages.
 
@@ -484,12 +501,7 @@ ros2 run tb3_livreur mission poste_A rejet depart
 
 ## Partie 8 — Bilan (15 min)
 
-1. Corrigez votre tableau « qui publie quoi ».
-2. `ros2 run tf2_tools view_frames` avec la navigation lancée : comparez avec le PDF de la partie 1.
-3. **Q25** (vérification collective du cours, 30 s chacune) : l'URDF donne-t-il la position du robot dans la salle ? `cmd_vel` contient-il une distance ? Qui fournit `map → odom` ? Le planificateur commande-t-il les roues ?
-4. Le behavior tree par défaut : `$(ros2 pkg prefix nav2_bt_navigator)/share/nav2_bt_navigator/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml`. Retrouvez-y : planifier, suivre, récupérer.
-
-**À rendre :** vos réponses aux questions Q1 à Q25, le tableau TF, vos trois fichiers de configuration complétés et vos fiches de diagnostic.
+A faire ensemble :) (Mais si vous arrivez là, vous avez bien géré ! Bravo !)
 
 ---
 

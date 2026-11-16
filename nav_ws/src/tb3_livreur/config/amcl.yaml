@@ -27,23 +27,46 @@ amcl:
     do_beamskip: false
 
     # --- Filtre à particules ---
-    min_particles: 0                # >>> À COMPLÉTER 6 : quelques centaines
-    max_particles: 0                # >>> À COMPLÉTER 6 : quelques milliers
-    pf_err: 0.05
-    pf_z: 0.99
-    resample_interval: 1
+    # Une particule = une hypothèse de pose (x, y, θ) du robot dans la carte. À chaque mise
+    # à jour, AMCL :
+    #   1. PRÉDIT : déplace chaque particule du mouvement mesuré par l'odométrie, plus un
+    #      bruit tiré au hasard (modèle de mouvement, alpha1..alpha4 ci-dessous) ;
+    #   2. PONDÈRE : compare le scan, vu depuis chaque particule, aux murs de la carte ;
+    #      une particule dont le scan « tombe » sur les murs reçoit un poids élevé ;
+    #   3. RÉÉCHANTILLONNE : tire un nouveau nuage où les particules lourdes sont dupliquées
+    #      et les légères disparaissent.
+    # Le nombre de particules s'adapte (« Adaptive » MCL, échantillonnage KLD) entre
+    # min_particles, quand le nuage est concentré, et max_particles, quand il est étalé
+    # (juste après la pose initiale, après une relocalisation globale).
+    # Trop peu : la bonne pose peut ne pas être représentée. Trop : du calcul pour rien.
+    min_particles: 0                # >>> À COMPLÉTER 6 : quelques centaines (nuage concentré)
+    max_particles: 0                # >>> À COMPLÉTER 6 : quelques milliers (nuage étalé)
+    pf_err: 0.05                    # KLD : erreur tolérée sur la distribution estimée...
+    pf_z: 0.99                      # ... avec cette confiance (plus exigeant = plus de particules)
+    resample_interval: 1            # rééchantillonner toutes les N mises à jour
     recovery_alpha_slow: 0.0        # > 0 : injecte des particules aléatoires si l'estimation
-    recovery_alpha_fast: 0.0        #       se dégrade (aide à retrouver un robot kidnappé)
+    recovery_alpha_fast: 0.0        #       se dégrade (aide à retrouver un robot kidnappé, déplacé sans prévenir AMCL)
 
-    # --- Modèle de mouvement (odométrie différentielle) et déclenchement des mises à jour ---
+    # --- Modèle de mouvement (odométrie différentielle) ---
+    # L'odométrie n'est pas parfaite (partie 2) : à l'étape PRÉDIT, AMCL ajoute à chaque
+    # particule un bruit proportionnel au mouvement. Plus un alpha est grand, plus le nuage
+    # s'étale à chaque déplacement : AMCL fait moins confiance à l'odométrie, et compte
+    # davantage sur le scan pour resserrer le nuage.
     robot_model_type: nav2_amcl::DifferentialMotionModel
-    alpha1: 0.2                     # bruit de rotation dû à la rotation
-    alpha2: 0.2                     # bruit de rotation dû à la translation
-    alpha3: 0.2                     # bruit de translation dû à la translation
-    alpha4: 0.2                     # bruit de translation dû à la rotation
-    alpha5: 0.2
-    update_min_d: 0.0               # >>> À COMPLÉTER 6 : mise à jour après N m parcourus...
-    update_min_a: 0.0               # >>> À COMPLÉTER 6 : ... ou N rad tournés
+    alpha1: 0.2                     # bruit sur la rotation, dû aux rotations
+    alpha2: 0.2                     # bruit sur la rotation, dû aux translations
+    alpha3: 0.2                     # bruit sur la translation, dû aux translations
+    alpha4: 0.2                     # bruit sur la translation, dû aux rotations
+    alpha5: 0.2                     # utilisé seulement par le modèle omnidirectionnel
+
+    # --- Déclenchement des mises à jour ---
+    # AMCL ne fait une mise à jour (prédire, pondérer, rééchantillonner) qu'après un
+    # déplacement minimal. Trop petit : beaucoup de calcul, et à l'arrêt le
+    # rééchantillonnage répété appauvrit le nuage. Trop grand : corrections rares,
+    # l'erreur de l'odométrie a le temps de s'accumuler entre deux.
+    update_min_d: 0.0               # >>> À COMPLÉTER 6 : distance (m), de l'ordre d'une à deux
+                                    #     longueurs de robot...
+    update_min_a: 0.0               # >>> À COMPLÉTER 6 : ... ou angle (rad), de l'ordre de 10 à 20°
 
     # --- Pose initiale : donnée dans RViz (topic /initialpose) ---
     set_initial_pose: false

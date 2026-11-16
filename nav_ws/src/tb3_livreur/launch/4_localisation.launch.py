@@ -28,7 +28,12 @@ ARGS_ROBOT = ['sim', 'urdf', 'robot', 'x', 'y', 'yaw', 'derive', 'publier_monde'
 
 # Nœuds à cycle de vie pilotés par le lifecycle manager, dans l'ordre de démarrage :
 # d'abord la carte, puis la localisation qui en a besoin.
-NOEUDS_LOCALISATION = []  # >>> À COMPLÉTER 7 : les deux nœuds, dans l'ordre de démarrage
+# >>> À COMPLÉTER 7 : une liste Python de chaînes : les noms (argument name=) des deux
+# nœuds lancés plus bas, sous le commentaire « Les deux nœuds à cycle de vie ».
+# Le lifecycle manager les configure puis les active dans l'ordre de la liste :
+# celui qui fournit une donnée avant celui qui en a besoin.
+# Forme attendue : ['nom_1', 'nom_2']
+NOEUDS_LOCALISATION = []
 
 
 def gestion_du_cycle_de_vie(context):
@@ -85,6 +90,7 @@ def generate_launch_description():
             launch_arguments=dict({a: LaunchConfiguration(a) for a in ARGS_ROBOT},
                                   rviz='false').items())]),
 
+        # Les deux nœuds à cycle de vie de la localisation
         Node(package='nav2_map_server', executable='map_server', name='map_server',
              output='screen', parameters=[{'yaml_filename': carte}]),
 
