@@ -116,9 +116,13 @@
   <!-- Le lidar est posé sur le dessus du châssis, légèrement en arrière du centre. Le repère
        base_scan est le repère dans lequel le message /scan exprime ses distances : chaque
        rayon part de son origine, l'angle 0 est son axe x. -->
-  <!-- >>> À COMPLÉTER 3 : le joint fixe « scan_joint », de base_link vers base_scan,
-       d'origine xyz="-0.032 0 0.172" et rpy="0 0 $(arg scan_yaw)" (sur le modèle de imu_joint).
-       Tant qu'il manque, le lien base_scan n'est rattaché à rien : pas de TF, donc pas de scan. -->
+  <joint name="scan_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_scan"/>
+    <!-- >>> À COMPLÉTER 3 : le lidar est 32 mm derrière le centre du châssis, 172 mm au-dessus de base_link.
+         Tant que xyz vaut 0 0 0, le lidar est dessiné (et le scan mesuré) au centre du châssis. -->
+    <origin xyz="0 0 0" rpy="0 0 $(arg scan_yaw)"/>
+  </joint>
   <link name="base_scan">
     <visual>
       <origin xyz="0 0 -0.010" rpy="0 0 0"/>
