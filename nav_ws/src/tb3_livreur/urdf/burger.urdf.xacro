@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<!--
+  Modèle simplifié du TurtleBot3 Burger pour le TP navigation.
+
+  Même structure de repères que le modèle officiel (turtlebot3_description), mais avec des
+  formes simples (boîtes et cylindres) à la place des maillages 3D :
+
+      base_footprint            point de contact au sol (z = 0), repère du robot pour Nav2
+        └── base_link           châssis
+              ├── wheel_left_link   roue gauche  (joint continuous)
+              ├── wheel_right_link  roue droite  (joint continuous)
+              ├── caster_back_link  roulette arrière (joint fixe)
+              ├── imu_link          centrale inertielle (joint fixe)
+              └── base_scan         lidar LDS-01 (joint fixe)
+
+  Unités URDF : mètres et radians. Convention ROS : x vers l'avant, y vers la gauche, z vers
+  le haut (REP 103). rpy = roulis, tangage, lacet.
+
+  Argument xacro scan_yaw : rotation du lidar autour de z, 0 par défaut (utilisé par les
+  exercices sur le repère du lidar).
+-->
+<robot name="turtlebot3_burger" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:arg name="scan_yaw" default="0.0"/>
+
+  <!-- Dimensions nominales du Burger (fiche ROBOTIS) -->
+  <xacro:property name="roue_rayon"     value="0.033"/>   <!-- m -->
+  <xacro:property name="roue_largeur"   value="0.018"/>   <!-- m -->
+  <xacro:property name="roue_entraxe"   value="0.160"/>   <!-- m, distance entre les roues -->
+  <xacro:property name="chassis_long"   value="0.140"/>   <!-- m -->
+  <xacro:property name="chassis_larg"   value="0.140"/>   <!-- m -->
+  <xacro:property name="chassis_haut"   value="0.143"/>   <!-- m -->
+
+  <material name="gris_fonce"><color rgba="0.30 0.30 0.30 1.0"/></material>
+  <material name="noir"><color rgba="0.05 0.05 0.05 1.0"/></material>
+  <material name="bleu"><color rgba="0.10 0.30 0.80 1.0"/></material>
+
+  <!-- ===== Repère au sol ===== -->
+  <link name="base_footprint"/>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.010" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ===== Châssis ===== -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="-0.032 0 0.070" rpy="0 0 0"/>
+      <geometry>
+        <box size="${chassis_long} ${chassis_larg} ${chassis_haut}"/>
+      </geometry>
+      <material name="gris_fonce"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.032 0 0.070" rpy="0 0 0"/>
+      <geometry>
+        <box size="${chassis_long} ${chassis_larg} ${chassis_haut}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ===== Roues : une macro, deux appels (gauche y > 0, droite y < 0) ===== -->
+  <xacro:macro name="roue" params="prefixe y">
+    <joint name="wheel_${prefixe}_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="wheel_${prefixe}_link"/>
+      <!-- La roue est posée sur son axe y ; on tourne le cylindre de -90° autour de x
+           pour que son axe (z du cylindre) devienne l'axe y du robot. -->
+      <origin xyz="0 ${y} 0.023" rpy="-1.5708 0 0"/>
+      <axis xyz="0 0 1"/>
+    </joint>
+    <link name="wheel_${prefixe}_link">
+      <visual>
+        <geometry>
+          <cylinder length="${roue_largeur}" radius="${roue_rayon}"/>
+        </geometry>
+        <material name="noir"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder length="${roue_largeur}" radius="${roue_rayon}"/>
+        </geometry>
+      </collision>
+    </link>
+  </xacro:macro>
+
+  <xacro:roue prefixe="left"  y="${roue_entraxe / 2}"/>
+  <xacro:roue prefixe="right" y="${-roue_entraxe / 2}"/>
+
+  <!-- ===== Roulette arrière ===== -->
+  <joint name="caster_back_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_back_link"/>
+    <origin xyz="-0.081 0 -0.004" rpy="0 0 0"/>
+  </joint>
+  <link name="caster_back_link">
+    <visual>
+      <geometry>
+        <sphere radius="0.008"/>
+      </geometry>
+      <material name="noir"/>
+    </visual>
+  </link>
+
+  <!-- ===== Centrale inertielle ===== -->
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="-0.032 0 0.068" rpy="0 0 0"/>
+  </joint>
+  <link name="imu_link"/>
+
+  <!-- ===== Lidar LDS-01 ===== -->
+  <!-- Le lidar est posé sur le dessus du châssis, légèrement en arrière du centre. Le repère
+       base_scan est le repère dans lequel le message /scan exprime ses distances : chaque
+       rayon part de son origine, l'angle 0 est son axe x. -->
+  <joint name="scan_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_scan"/>
+    <origin xyz="-0.032 0 0.172" rpy="0 0 $(arg scan_yaw)"/>
+  </joint>
+  <link name="base_scan">
+    <visual>
+      <origin xyz="0 0 -0.010" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.030" radius="0.035"/>
+      </geometry>
+      <material name="bleu"/>
+    </visual>
+    <!-- petit index pour voir l'avant du lidar -->
+    <visual>
+      <origin xyz="0.030 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.020 0.006 0.006"/>
+      </geometry>
+      <material name="noir"/>
+    </visual>
+  </link>
+
+</robot>

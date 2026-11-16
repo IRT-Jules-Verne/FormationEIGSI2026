@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Profil Fast DDS : transport UDP uniquement, sans memoire partagee (SHM).
+  Sous Windows, le transport SHM de Fast DDS provoque des blocages et des crashs des que
+  plusieurs nœuds tournent (Nav2 en lance une dizaine) ou qu'un processus a ete tue sans
+  menage ("Interprocess mutex timeout ... owner died without unlocking").
+  Active par la variable FASTRTPS_DEFAULT_PROFILES_FILE (voir pixi.toml).
+-->
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <transport_descriptors>
+    <transport_descriptor>
+      <transport_id>udp_seulement</transport_id>
+      <type>UDPv4</type>
+    </transport_descriptor>
+  </transport_descriptors>
+  <participant profile_name="participant_udp" is_default_profile="true">
+    <rtps>
+      <userTransports>
+        <transport_id>udp_seulement</transport_id>
+      </userTransports>
+      <useBuiltinTransports>false</useBuiltinTransports>
+    </rtps>
+  </participant>
+</profiles>

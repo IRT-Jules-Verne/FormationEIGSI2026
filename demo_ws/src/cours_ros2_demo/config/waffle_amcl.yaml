@@ -1,0 +1,59 @@
+# Paramètres d'AMCL (Adaptive Monte Carlo Localization) pour le TurtleBot3 Waffle (démonstrations du cours).
+# Référence : nav2_bringup/params/nav2_params.yaml et docs.nav2.org (configuring-amcl).
+amcl:
+  ros__parameters:
+    use_sim_time: false
+
+    # --- Repères et topics ---
+    base_frame_id: base_footprint   # le robot
+    odom_frame_id: odom             # publié par l'odométrie
+    global_frame_id: map            # la carte ; AMCL publie map -> odom
+    scan_topic: scan
+    tf_broadcast: true              # false : AMCL estime mais ne publie pas map -> odom
+    transform_tolerance: 1.0
+
+    # --- Modèle du lidar ---
+    laser_model_type: likelihood_field
+    laser_max_range: 3.5            # portée du LDS-01
+    laser_min_range: -1.0           # -1 : utiliser range_min du message
+    max_beams: 60                   # rayons utilisés par mise à jour (sur 360)
+    laser_likelihood_max_dist: 2.0
+    sigma_hit: 0.2
+    z_hit: 0.5
+    z_rand: 0.5
+    z_max: 0.05
+    z_short: 0.05
+    lambda_short: 0.1
+    do_beamskip: false
+
+    # --- Filtre à particules ---
+    min_particles: 500
+    max_particles: 2000
+    pf_err: 0.05
+    pf_z: 0.99
+    resample_interval: 1
+    recovery_alpha_slow: 0.0        # > 0 : injecte des particules aléatoires si l'estimation
+    recovery_alpha_fast: 0.0        #       se dégrade (aide à retrouver un robot kidnappé)
+
+    # --- Modèle de mouvement (odométrie différentielle) et déclenchement des mises à jour ---
+    robot_model_type: nav2_amcl::DifferentialMotionModel
+    alpha1: 0.2                     # bruit de rotation dû à la rotation
+    alpha2: 0.2                     # bruit de rotation dû à la translation
+    alpha3: 0.2                     # bruit de translation dû à la translation
+    alpha4: 0.2                     # bruit de translation dû à la rotation
+    alpha5: 0.2
+    update_min_d: 0.2               # mise à jour après 20 cm parcourus...
+    update_min_a: 0.2               # ... ou 0,2 rad tournés
+
+    # --- Pose initiale ---
+    # Démo : AMCL part de la pose de départ du simulateur (0, 0, 0) avec son incertitude
+    # standard (sigma 0,5 m, 15 degrés) : le nuage de particules est visible dès le lancement.
+    # Dans le TP (amcl.yaml) : false, la pose est donnée dans RViz (topic /initialpose).
+    set_initial_pose: true
+    initial_pose: {x: 0.0, y: 0.0, z: 0.0, yaw: 0.0}
+    save_pose_rate: 0.5
+    always_reset_initial_pose: false
+    first_map_only: false
+    beam_skip_distance: 0.5
+    beam_skip_error_threshold: 0.9
+    beam_skip_threshold: 0.3

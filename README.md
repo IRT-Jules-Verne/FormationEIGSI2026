@@ -105,3 +105,13 @@ Pour que VS Code reconnaisse les bibliothèques ROS 2 (`rclpy`, messages…), ch
 3. Choisissez `.\.pixi\envs\default\python.exe`. S’il n’apparaît pas, utilisez **Enter interpreter path…** et indiquez ce chemin.
 
 Le terminal intégré (`Ctrl+ù`) est un PowerShell. Lancez-y `pixi shell` comme dans un terminal normal.
+
+## 7. Les workspaces du cours
+
+| Dossier | Contenu | Tâches pixi |
+|---|---|---|
+| `demo_ws` | démonstrations du cours (`pixi run cours` liste les démos du cours Nav2, `pixi run cours demo:=4.5` en lance une) | `build`, `ws`, `cours` |
+| `tp_ws` | TP 1 « tortue livreuse » (`tp_ws/TP_tortue_livreuse.md`) | `tp-build`, `tp`, `tp-pdf` |
+| `nav_ws` | TP 2 « TurtleBot3 livreur » : navigation Nav2 en simulation (`nav_ws/TP_turtlebot_navigation.md`) | `nav-build`, `nav`, `nav-pdf` |
+
+Les tâches `ws`, `tp` et `nav` ouvrent un terminal avec ROS 2 et l'overlay du workspace chargé ; `build`, `tp-build` et `nav-build` compilent le workspace correspondant.

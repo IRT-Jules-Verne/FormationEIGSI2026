@@ -14,3 +14,10 @@ bag_*/
 # Python
 __pycache__/
 *.pyc
+
+# Anciens workshops (ROS 1), non distribues
+vieux_worksop/
+
+# Sorties de view_frames
+frames_*.pdf
+frames_*.gv

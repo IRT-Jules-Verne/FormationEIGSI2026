@@ -1,0 +1,8 @@
+# Lieux nommes de l atelier MecaTri (repere map : x, y en m, yaw en rad)
+depart: [0.0, 0.0, 0.0]
+cellule: [5.0, 1.2, 1.5708]
+poste_A: [0.2, 6.0, 3.1416]
+poste_B: [10.2, 5.3, -1.5708]
+rejet: [9.8, 0.8, -1.5708]
+alcove_1: [2.0, 6.2, 1.5708]
+alcove_2: [5.0, 6.2, 1.5708]

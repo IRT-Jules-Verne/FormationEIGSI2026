@@ -1,27 +1,60 @@
 [workspace]
 channels = ["robostack-humble", "conda-forge"]
 name = "ros2_ws"
-platforms = ['win-64']
+platforms = ['win-64', 'linux-64', 'osx-64']
 version = "0.1.0"
 
 [tasks]
 # Compile le workspace de demo (demo_ws)
 build = { cmd = "colcon build", cwd = "demo_ws" }
-# Ouvre un PowerShell avec ROS 2 (pixi) + l'overlay demo_ws charge.
-# Equivalent de : pixi shell ; .\install\local_setup.ps1   (taper 'exit' pour quitter)
-ws = { cmd = "powershell -NoExit -ExecutionPolicy Bypass -Command \". .\\install\\local_setup.ps1; Write-Host 'Overlay demo_ws charge' -ForegroundColor Green\"", cwd = "demo_ws", depends-on = ["build"] }
 
 # Compile le workspace du TP (tp_ws)
 tp-build = { cmd = "colcon build", cwd = "tp_ws" }
-# Ouvre un PowerShell avec ROS 2 (pixi) + l'overlay tp_ws charge (taper 'exit' pour quitter)
-tp = { cmd = "powershell -NoExit -ExecutionPolicy Bypass -Command \". .\\install\\local_setup.ps1; Write-Host 'Overlay tp_ws charge' -ForegroundColor Green\"", cwd = "tp_ws" }
 # Genere le PDF de l'enonce du TP (environnement temporaire, n'affecte pas ROS 2)
 tp-pdf = "pixi exec -s python=3.12 -s markdown python outils/md_vers_pdf.py tp_ws/TP_tortue_livreuse.md"
+
+# Compile le workspace du TP navigation (nav_ws)
+nav-build = { cmd = "colcon build", cwd = "nav_ws" }
+nav-pdf = "pixi exec -s python=3.12 -s markdown python outils/md_vers_pdf.py nav_ws/TP_turtlebot_navigation.md"
+
+# Demonstrations du cours (module 4) : pixi run cours demo:=4.2   (liste : pixi run cours)
+# Charge les overlays demo_ws + nav_ws puis lance cours_ros2_demo/cours.launch.py.
+# Prerequis : pixi run build et pixi run nav-build (une fois, ou apres une modification).
+cours = "python outils/cours.py"
+
+# --- Taches dependant de l'OS : ouvrent un terminal avec ROS 2 (pixi) + l'overlay charge ---
+# (taper 'exit' pour quitter)
+
+[target.win-64.tasks]
+# Ouvre un PowerShell avec ROS 2 (pixi) + l'overlay demo_ws charge.
+# Equivalent de : pixi shell ; .\install\local_setup.ps1   (taper 'exit' pour quitter)
+ws = { cmd = "powershell -NoExit -ExecutionPolicy Bypass -Command \". .\\install\\local_setup.ps1; Write-Host 'Overlay demo_ws charge' -ForegroundColor Green\"", cwd = "demo_ws", depends-on = ["build"] }
+# Ouvre un PowerShell avec ROS 2 (pixi) + l'overlay tp_ws charge (taper 'exit' pour quitter)
+tp = { cmd = "powershell -NoExit -ExecutionPolicy Bypass -Command \". .\\install\\local_setup.ps1; Write-Host 'Overlay tp_ws charge' -ForegroundColor Green\"", cwd = "tp_ws" }
+# Ouvre un PowerShell avec ROS 2 (pixi) + l'overlay nav_ws charge (TP navigation)
+nav = { cmd = "powershell -NoExit -ExecutionPolicy Bypass -Command \". .\\install\\local_setup.ps1; Write-Host 'Overlay nav_ws charge' -ForegroundColor Green\"", cwd = "nav_ws" }
+
+[target.unix.tasks]
+# Linux / macOS : ouvre un bash (sans ~/.bashrc, pour ne pas melanger avec un ROS installe sur la machine)
+# Equivalent de : pixi shell ; source install/local_setup.bash
+ws = { cmd = 'bash -c "source install/local_setup.bash && echo Overlay demo_ws charge && exec bash --norc -i"', cwd = "demo_ws", depends-on = ["build"] }
+tp = { cmd = 'bash -c "source install/local_setup.bash && echo Overlay tp_ws charge && exec bash --norc -i"', cwd = "tp_ws" }
+nav = { cmd = 'bash -c "source install/local_setup.bash && echo Overlay nav_ws charge && exec bash --norc -i"', cwd = "nav_ws" }
 
 [activation.env]
 # Isole ROS 2 sur la machine locale : evite de voir les noeuds des autres etudiants
 # (applique automatiquement par pixi shell / pixi run, dans chaque terminal).
 ROS_LOCALHOST_ONLY = "1"
+
+# Scripts d'activation : Fast DDS sans memoire partagee (UDP seulement). Sous Windows, le
+# transport SHM bloque ou fait planter les noeuds des qu'il y en a beaucoup (Nav2) ou qu'un
+# processus a ete tue brutalement. Les scripts fixent FASTRTPS_DEFAULT_PROFILES_FILE sur
+# outils/fastdds_sans_shm.xml, a partir du dossier du projet.
+[target.win-64.activation]
+scripts = ["outils/activation.bat"]
+
+[target.unix.activation]
+scripts = ["outils/activation.sh"]
 
 [dependencies]
 # Python 3.12 => builds robostack PyQt5 (les builds py3.14 passent a PyQt6
@@ -32,3 +65,12 @@ ros-humble-turtlesim = ">=1.4.3,<2"
 colcon-common-extensions = ">=0.3.0,<0.4"
 # empy 4 casse "ros2 pkg create" (AttributeError: BUFFERED_OPT) : ROS 2 Humble attend empy 3
 empy = "3.3.*"
+ros-humble-navigation2 = ">=1.1.20,<1.2"        # nav2_* (amcl, map_server, planner, controller, bt_navigator, simple_commander…)
+ros-humble-nav2-bringup = ">=1.1.20,<1.2"       # launch files et nav2_params.yaml de référence
+ros-humble-slam-toolbox = ">=2.6.10,<2.7"
+ros-humble-turtlebot3-description = ">=2.3.6,<2.4"  # URDF officiel du Burger (comparaison + robot réel)
+ros-humble-tf-transformations = ">=1.1.1,<1.2"
+ros-humble-xacro = "*"
+ros-humble-joint-state-publisher-gui = "*"
+ros-humble-teleop-twist-keyboard = "*"          # déjà dans le lock
+ros-humble-nav2-rviz-plugins = "*"              # panneau Nav2 dans RViz (optionnel)
