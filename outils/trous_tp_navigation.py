@@ -29,9 +29,15 @@ TROUS = {
     <origin xyz="-0.032 0 0.172" rpy="0 0 $(arg scan_yaw)"/>
   </joint>
 ''',
-         '''  <!-- >>> À COMPLÉTER 3 : le joint fixe « scan_joint », de base_link vers base_scan,
-       d'origine xyz="-0.032 0 0.172" et rpy="0 0 $(arg scan_yaw)" (sur le modèle de imu_joint).
-       Tant qu'il manque, le lien base_scan n'est rattaché à rien : pas de TF, donc pas de scan. -->
+         # Le joint reste présent (seule sa position est fausse) : sans lui, base_scan serait
+         # une seconde racine et robot_state_publisher refuserait tout le modèle dès la partie 1.
+         '''  <joint name="scan_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_scan"/>
+    <!-- >>> À COMPLÉTER 3 : le lidar est 32 mm derrière le centre du châssis, 172 mm au-dessus de base_link.
+         Tant que xyz vaut 0 0 0, le lidar est dessiné (et le scan mesuré) au centre du châssis. -->
+    <origin xyz="0 0 0" rpy="0 0 $(arg scan_yaw)"/>
+  </joint>
 '''),
     ],
     'config/slam.yaml': [

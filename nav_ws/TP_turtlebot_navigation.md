@@ -4,7 +4,7 @@
 
 Dans ce TP, vous construisez **couche par couche** la pile logicielle qui permet à un TurtleBot3 Burger d'aller seul d'un point à un autre dans un atelier : le modèle du robot, le lidar, la carte, la localisation, puis la navigation. Le code est fourni ; vous complétez les endroits marqués `>>> À COMPLÉTER` et vous répondez aux questions.
 
-> **Comment lire ce TP.** Chaque étape commence par une **question** (Q1, Q2…) posée *avant* la manipulation : notez votre prédiction (une phrase, un croquis, une valeur). Les **pistes** sont des choses à essayer pour vérifier par vous-même, *avant* de lire la suite. La rubrique **à retenir** donne ensuite la réponse en quelques lignes. Vous rendez vos réponses aux questions à la fin de la séance.
+> **Comment lire ce TP.** Chaque étape commence par une **question** (Q1, Q2…) posée *avant* la manipulation, réfléchissez y avant de faire la suite. Les **pistes** sont des choses à essayer pour vérifier par vous-même, *avant* de lire la suite. La rubrique **à retenir** donne ensuite la réponse en quelques lignes. 
 
 ## Objectifs
 
@@ -36,8 +36,6 @@ flowchart LR
     N --> P[7. Mission<br/>nœud Python]
 ```
 
-**Pas de Gazebo.** Les PC de la salle ne font pas tous tourner un simulateur 3D. Le robot est remplacé par un **simulateur « loopback »** (package `tb3_loopback_sim`) : il reçoit `/cmd_vel`, intègre les vitesses pour calculer où est le robot, et publie exactement ce que publie le vrai TurtleBot3 : `/odom`, `/scan`, `/joint_states` et la transformation `odom → base_footprint`. Le scan est calculé par lancer de rayons dans un plan de l'atelier **que vous ne voyez pas**. Son odométrie **dérive**, comme celle d'un vrai robot. Tout ce que vous construirez au-dessus (SLAM, AMCL, Nav2) fonctionnerait tel quel sur le robot réel : seul le launch `2_robot` change (`sim:=false`).
-
 ### Le fil rouge : qui publie chaque transformation ?
 
 Gardez ce tableau sous la main et remplissez-le au fil du TP. C'est la question centrale de la navigation.
@@ -49,20 +47,7 @@ Gardez ce tableau sous la main et remplissez-le au fil du TP. C'est la question 
 | `map → odom` pendant la cartographie | | 3 |
 | `map → odom` pendant la navigation | | 4 |
 
-> **Rappel PowerShell** : chaque nouveau terminal doit être préparé avec les deux commandes ci-dessous (ROS 2, puis le workspace). On les appellera « **préparer le terminal** ». Le raccourci `pixi run nav` depuis `ros2_ws` fait les deux d'un coup.
->
-> ```powershell
-> pixi shell                      # depuis le dossier ros2_ws
-> cd nav_ws
-> . .\install\local_setup.ps1     # attention au point et à l'espace au début
-> ```
->
-> Après **toute modification** d'un fichier du package (URDF, YAML, launch, Python), reconstruisez puis rechargez l'overlay dans les terminaux concernés :
->
-> ```powershell
-> colcon build                    # depuis nav_ws
-> . .\install\local_setup.ps1
-> ```
+> **Rappel PowerShell** : chaque nouveau terminal doit être préparé avec la commande `pixi run nav` depuis `ros2_ws`. Si vous faites des modifications dans le code `pixi run nav-build` depuis `ros2_ws` pour installer le code.
 
 ---
 
@@ -91,7 +76,7 @@ Un robot est d'abord un **arbre de repères** : chaque pièce (lien, *link*) est
 
 ### 1.1 Un modèle sans articulation mobile
 
-**Q1 — Avant de lancer.** Le fichier `burger.urdf.xacro` décrit la géométrie des roues. Suffit-il pour connaître l'angle *actuel* d'une roue ? D'où devra venir cette information ?
+**Q1 — Avant de lancer.** Le fichier `burger.urdf.xacro` décrit la géométrie des roues. Est-ce que celà permet de connaître l'angle *actuel* d'une roue ? D'où devra venir cette information ?
 
 **Pistes.** Ouvrez `urdf/burger.urdf.xacro` : cherchez les joints de type `continuous` et `fixed`. Puis, dans deux terminaux préparés :
 
@@ -166,7 +151,7 @@ Un capteur est une **donnée** (`sensor_msgs/LaserScan`) **exprimée dans un rep
 
 **Q5 — Avant de lancer.** D'après le cours, combien de rayons et quelle portée a le LDS-01 du Burger ? Dans un message `LaserScan`, que signifie une valeur `inf` dans `ranges` ?
 
-**Manipulation.** Le lien `base_scan` existe dans l'URDF mais son joint est incomplet (`>>> À COMPLÉTER 3`) : le lidar est posé 32 mm derrière le centre du châssis et 172 mm au-dessus de `base_link` (xyz = `-0.032 0 0.172`). Complétez, reconstruisez, puis lancez le robot complet :
+**Manipulation.** Le joint `scan_joint` existe dans l'URDF mais sa position est fausse (`>>> À COMPLÉTER 3`) : tel quel, le lidar est au centre du châssis. Il est en réalité posé 32 mm derrière le centre du châssis et 172 mm au-dessus de `base_link` (xyz = `-0.032 0 0.172`). Complétez, reconstruisez, puis lancez le robot complet :
 
 ```powershell
 ros2 launch tb3_livreur 2_robot.launch.py
@@ -526,7 +511,8 @@ Coordonnées utiles (repère `map`, robot au départ en (0, 0)) : la cellule est
 
 ## Dépannage
 
-- **Pas de scan dans RViz, et le simulateur affiche `Pas de scan : transformation base_footprint -> base_scan introuvable`** : le modèle ne déclare pas `base_scan` (partie 2 non faite) ou `robot_state_publisher` a refusé l'URDF (erreur dans le terminal).
+- **Pas de scan dans RViz, et le simulateur affiche `Pas de scan : transformation base_footprint -> base_scan introuvable`** : le modèle ne déclare pas `base_scan` ou `robot_state_publisher` a refusé l'URDF (erreur dans le terminal).
+- **`robot_state_publisher` meurt au lancement avec `Failed to find root link: Two root links found`** (ou un lien qui a deux parents) : un `<link>` n'est l'enfant d'aucun `<joint>`, ou un `parent`/`child` est inversé. L'URDF doit rester un arbre à une seule racine, `base_footprint`.
 - **`xacro` se plaint** : une balise mal fermée ou une propriété inconnue ; le message donne la ligne.
 - **RViz affiche `Fixed Frame [map] does not exist`** : personne ne publie `map → odom` : pas de SLAM ni d'AMCL actif, ou AMCL attend la pose initiale.
 - **La carte ne s'affiche pas dans RViz alors que `ros2 topic info /map -v` montre un publieur** : question de QoS. `map_server` publie la carte **une seule fois**, avec la durabilité `Transient Local` (le message est conservé pour les abonnés qui arrivent après). Un affichage `Map` ajouté à la main dans RViz est en `Volatile` : il ne reçoit rien tant que personne ne republie. Dans le panneau Displays, ouvrez `Map → Topic` et mettez `Durability Policy` à `Transient Local` (les fichiers `.rviz` fournis le font déjà). Même règle pour `/global_costmap/costmap`. À l'inverse, `/scan` est publié en `Best Effort` : un abonné `Reliable` ne le recevra pas.
