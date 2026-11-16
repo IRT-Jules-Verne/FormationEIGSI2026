@@ -97,7 +97,11 @@ Dans RViz, le modèle s'affiche-t-il entièrement ? Regardez le panneau *Display
 ros2 launch tb3_livreur 1_modele.launch.py
 ```
 
-Une petite fenêtre « Joint State Publisher » apparaît. Bougez les curseurs. Puis dans un autre terminal :
+Une petite fenêtre « Joint State Publisher » apparaît. Bougez les curseurs.
+
+![Modèle de départ (une seule roue) et la fenêtre Joint State Publisher](images/p1_modele_incomplet_and_joint_state_publisher_gui.png)
+
+Puis dans un autre terminal :
 
 ```powershell
 ros2 topic echo /joint_states --once
@@ -135,9 +139,13 @@ ros2 run tf2_tools view_frames       # produit frames_xxx.pdf dans le dossier co
 
 Ouvrez le PDF : c'est le premier arbre TF du TP. Gardez-le, vous le comparerez à celui de la fin.
 
+![Arbre TF du modèle complet, produit par view_frames](images/p1_view_frames.png)
+
 **À retenir.** `base_footprint` est la projection du robot **au sol** (z = 0) : c'est le repère que Nav2 et AMCL utilisent pour la navigation. `base_link` est le châssis, le lieu où sont executé les vitesses, 1 cm plus haut. Les capteurs sont attachés à `base_link`.
 
 **Point de contrôle 1.** Le Burger complet dans RViz (châssis, deux roues, roulette, lidar bleu), roues qui tournent avec les curseurs, `view_frames` avec 7 repères.
+
+![Le Burger complet dans RViz, avec ses repères](images/p1_burger_complet.png)
 
 *Pour comparer : le modèle officiel ROBOTIS, avec ses maillages 3D, est dans le package `turtlebot3_description` : `ros2 launch tb3_livreur 1_modele.launch.py urdf:=$(ros2 pkg prefix turtlebot3_description)/share/turtlebot3_description/urdf/turtlebot3_burger.urdf` — même structure, mêmes noms de repères.*
 
@@ -157,7 +165,11 @@ Un capteur est une **donnée** (`sensor_msgs/LaserScan`) **exprimée dans un rep
   ros2 launch tb3_livreur 2_robot.launch.py
 ```
 
-RViz s'ouvre avec le modèle, l'odométrie et le scan (points rouges). Dans un autre terminal :
+RViz s'ouvre avec le modèle, l'odométrie et le scan (points rouges).
+
+![Le scan du lidar autour du robot](images/p2_scan.png)
+
+Dans un autre terminal :
 
 ```powershell
 ros2 interface show sensor_msgs/msg/LaserScan
@@ -190,6 +202,8 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 Le mur apparaît derrière le robot au lieu de devant. Remettez `scan_yaw:=0.0`.
 
+![Le même scan avec scan_yaw:=3.14159 : les murs sont dessinés retournés](images/p2_scan_yaw_apres.png)
+
 **À retenir.** Le message est **identique** : mêmes distances, mêmes angles. Seule la transformation `base_link → base_scan` a changé, donc RViz (et plus tard AMCL et Nav2) placent les mêmes points ailleurs. Sur un vrai robot, un lidar monté à l'envers se corrige **dans l'URDF**, pas dans le driver. C'est le premier cas du mini-cas de diagnostic du cours.
 
 ### 2.3 L'odométrie
@@ -216,6 +230,10 @@ Recommencez avec une odométrie parfaite :
 ```powershell
 ros2 launch tb3_livreur 2_robot.launch.py derive:=false
 ```
+
+| Odométrie qui dérive | Odométrie parfaite (`derive:=false`) |
+|---|---|
+| ![Scans accumulés pendant un tour : les murs forment un éventail](images/p2_derive_odom.png) | ![Scans accumulés pendant un tour : les murs restent nets](images/p2_odom_parfaite.png) |
 
 *Pour aller plus loin : même manipulation avec un carré d'environ 2 m de côté. Les murs se dédoublent aussi, mais l'effet est moins net qu'avec la rotation.*
 
@@ -246,6 +264,10 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 **Pistes.** Avant de cartographier, regardez avec `ros2 run tf2_ros tf2_echo map odom` ce que vaut `map → odom` au départ, puis après quelques mètres. Regardez `view_frames` : qui publie `map → odom` ? Remplissez la ligne 3 du tableau.
 
 Cartographiez tout l'atelier. Conseils : **lentement** (vitesse 0,15 m/s), tournez puis avancez plutôt que les deux à la fois, ne collez pas les murs, et **fermez les boucles** en repassant par des endroits déjà vus. Les deux alcôves du haut et le couloir étroit en haut à droite font partie de l'atelier.
+
+![Début de la cartographie : en blanc le libre, en gris l'inconnu, en noir les obstacles](images/p3_carte_debut.png)
+
+![Fin de la cartographie : tout l'atelier est exploré](images/p3_carte_complete.png)
 
 **À retenir.** Avec l'odométrie seule, la dérive ferait apparaître des murs dédoublés et des pièces déformées. slam_toolbox **recale** chaque scan sur les précédents (scan matching) et, quand le robot revient dans un lieu connu, corrige d'un coup toute la trajectoire (fermeture de boucle). La correction est portée par `map → odom` : l'odométrie reste continue, c'est `map → odom` qui « saute ».
 
@@ -303,6 +325,8 @@ ros2 launch tb3_livreur 4_localisation.launch.py
 
 Dans RViz : outil **2D Pose Estimate** (barre du haut), cliquez à la position du robot et glissez dans sa direction. Le robot démarre en (0, 0) orienté vers +x : le coin bas-gauche de la carte.
 
+![Juste après la pose initiale : les particules (flèches vertes) sont dispersées autour du robot](images/p4_nuage_pose_initiale.png)
+
 **À retenir.** Une transformation TF a **un seul** publieur. SLAM pendant la cartographie, AMCL pendant la navigation sur carte fixe : jamais les deux.
 
 ### 4.2 Les nœuds à cycle de vie
@@ -328,6 +352,10 @@ Puis relancez avec `amcl_gere:=false` et refaites `ros2 lifecycle get /amcl`. Y 
 **Pistes.** Donnez la pose initiale, attendez 30 s sans rien faire. Puis téléopérez lentement vers un coin de mur ou une machine. Comparez le scan (rouge) et les murs de la carte (noir) : se superposent-ils ?
 
 **Manipulation.** Dans `amcl.yaml`, mettez `max_particles: 50`, relancez, redonnez la pose initiale ; puis `5000`. Observez la convergence et le temps de calcul (`ros2 topic hz /particle_cloud`). Remettez 2000.
+
+| Pose initiale | Début du déplacement | Après quelques mètres |
+|---|---|---|
+| ![Nuage étalé après la pose initiale](images/p4_amcl.png) | ![Le nuage commence à se resserrer](images/p4_debut_converge.png) | ![Le nuage est resserré autour du robot](images/p4_fin_converge.png) |
 
 **À retenir.** Chaque particule est une pose possible (x, y, θ). AMCL **prédit** avec l'odométrie puis **pondère** avec le scan : il faut du mouvement et des murs vus sous différents angles pour départager les hypothèses. Trop peu de particules : on peut rater la bonne pose ; trop : du calcul pour rien.
 
@@ -377,6 +405,8 @@ ros2 launch tb3_livreur 5_navigation.launch.py
 
 Tant que la pose initiale n'est pas donnée, le terminal répète `Timed out waiting for transform from base_footprint to map` : la costmap globale attend `map → odom`, donc AMCL, donc vous. Dans RViz : **2D Pose Estimate**, puis **Nav2 Goal** (ou l'outil *2D Goal Pose*) vers la cellule de tri (au centre, devant le convoyeur). Le robot y va.
 
+![En navigation : le chemin global du planificateur et la trajectoire courte du contrôleur (en rouge)](images/p5_cheminlocal_global.png)
+
 **À retenir.** Demi-diagonale du châssis : √(0,069² + 0,089²) ≈ 0,113 m, soit `robot_radius: 0.12`. La costmap locale **suit** le robot (`robot_base_frame: base_footprint`, `rolling_window: true`) mais ses cellules sont **fixées** dans `odom` (`global_frame: odom`). Pas dans `base_footprint` : la grille tournerait avec le robot, et chaque obstacle mémorisé devrait être recalculé à chaque mouvement. Pas dans `map` : quand AMCL corrige `map → odom`, la pose saute de quelques centimètres et les obstacles sembleraient bouger d'un coup sous le contrôleur. `odom` est **continu** : c'est le bon repère pour ce qui se passe dans les prochaines secondes autour du robot. La costmap globale, elle, est dans `map`, car le but est donné dans la salle.
 
 ### 5.2 Deux costmaps
@@ -390,6 +420,8 @@ ros2 param get /local_costmap/local_costmap rolling_window
 ros2 param get /local_costmap/local_costmap plugins
 ros2 param get /global_costmap/global_costmap plugins
 ```
+
+![Costmap globale : obstacles de la carte, zone interdite au centre du robot (cyan) et inflation (rose) ; en bas à gauche, la costmap locale autour du robot](images/p5_costmap.png)
 
 **À retenir.** La **globale** couvre toute la carte (couche statique + obstacles observés + inflation) et sert au planificateur. La **locale** est une fenêtre de 3 m × 3 m autour du robot (obstacles observés + inflation), mise à jour plus vite, pour le contrôleur. Les coûts internes vont de 0 (libre) à 254 (létal) ; 253 marque la zone où le centre du robot ne peut pas aller.
 
