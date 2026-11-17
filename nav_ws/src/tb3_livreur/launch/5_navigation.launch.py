@@ -46,7 +46,7 @@ def generate_launch_description():
     sortie_smoother = PythonExpression(["'cmd_vel_lisse' if '", panne, "' == '3' else 'cmd_vel'"])
     scan_yaw = PythonExpression(["'3.14159' if '", panne, "' == '4' else '0.0'"])
 
-    # >>> À COMPLÉTER 9 : une liste Python de chaînes : les noms (argument name=) des sept
+    # >>> À COMPLÉTER 8 : une liste Python de chaînes : les noms (argument name=) des sept
     # Node(...) lancés plus bas, sous le commentaire « Les serveurs Nav2 ».
     # Ordre de démarrage : le contrôleur (et sa costmap locale) d'abord, le bt_navigator après
     # les serveurs qu'il appelle, le velocity_smoother en dernier. L'ordre des Node(...) dans

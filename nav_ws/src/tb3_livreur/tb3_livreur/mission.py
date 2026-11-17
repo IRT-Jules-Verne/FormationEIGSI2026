@@ -23,10 +23,10 @@ from std_msgs.msg import String
 # Relevées dans RViz avec l'outil « Publish Point » (topic /clicked_point).
 LIEUX = {
     'depart':  (0.0, 0.0, 0.0),
-    'cellule': (0.0, 0.0, 0.0),   # >>> À COMPLÉTER 10 : relever x, y dans RViz (Publish Point)
-    'poste_A': (0.0, 0.0, 0.0),   # >>> À COMPLÉTER 10
-    'poste_B': (0.0, 0.0, 0.0),   # >>> À COMPLÉTER 10
-    'rejet':   (0.0, 0.0, 0.0),   # >>> À COMPLÉTER 10
+    'cellule': (0.0, 0.0, 0.0),   # >>> À COMPLÉTER 9 : relever x, y dans RViz (Publish Point)
+    'poste_A': (0.0, 0.0, 0.0),   # >>> À COMPLÉTER 9
+    'poste_B': (0.0, 0.0, 0.0),   # >>> À COMPLÉTER 9
+    'rejet':   (0.0, 0.0, 0.0),   # >>> À COMPLÉTER 9
 }
 
 TOURNEE_PAR_DEFAUT = ['cellule', 'poste_A', 'cellule', 'poste_B', 'depart']

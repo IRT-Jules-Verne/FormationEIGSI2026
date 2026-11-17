@@ -3,6 +3,15 @@
 slam_toolbox:
   ros__parameters:
     # --- Repères et topics : doivent correspondre au robot ---
+    # >>> À COMPLÉTER 4 : les noms EXACTS, tels que le robot les publie. Pour les trouver,
+    #     lancez le robot seul (ros2 launch tb3_livreur 2_robot.launch.py), puis :
+    #       ros2 topic list -t                          -> quel topic est un sensor_msgs/msg/LaserScan ?
+    #       ros2 topic echo /odom --once --field header.frame_id   -> le repère de l'odométrie
+    #       ros2 topic echo /odom --once --field child_frame_id    -> le repère du robot qu'elle déplace
+    #       ros2 run tf2_tools view_frames              -> l'arbre TF (frames_*.pdf) : qui est parent de qui ?
+    #     map_frame n'existe pas encore dans l'arbre : c'est slam_toolbox qui le crée, au-dessus
+    #     de l'odométrie. Prenez le nom standard (REP 105, cours), celui que rviz/slam.rviz
+    #     utilise comme « Fixed Frame ».
     odom_frame: A_COMPLETER       # >>> À COMPLÉTER 4 : le repère publié par l'odométrie
     map_frame: A_COMPLETER        # >>> À COMPLÉTER 4 : le repère que slam_toolbox crée
     base_frame: A_COMPLETER       # >>> À COMPLÉTER 4 : le repère du robot au sol

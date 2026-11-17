@@ -5,16 +5,22 @@ amcl:
     use_sim_time: false
 
     # --- Repères et topics ---
-    base_frame_id: A_COMPLETER      # >>> À COMPLÉTER 6 : le repère du robot
-    odom_frame_id: A_COMPLETER      # >>> À COMPLÉTER 6 : le repère de l'odométrie
-    global_frame_id: A_COMPLETER    # >>> À COMPLÉTER 6 : le repère de la carte
-    scan_topic: A_COMPLETER         # >>> À COMPLÉTER 6
+    # >>> À COMPLÉTER 5 : les mêmes que dans slam.yaml, avec les mêmes moyens de vérification
+    #     (robot lancé) : ros2 topic list -t, ros2 topic echo /odom --once --field header.frame_id
+    #     (et --field child_frame_id), ros2 run tf2_tools view_frames.
+    #     Pour la carte : le repère dans lequel /map est publiée. Avec le SLAM lancé :
+    #       ros2 topic echo /map --once --field header.frame_id
+    #     (map_server publie la carte fournie dans ce même repère.)
+    base_frame_id: A_COMPLETER      # >>> À COMPLÉTER 5 : le repère du robot
+    odom_frame_id: A_COMPLETER      # >>> À COMPLÉTER 5 : le repère de l'odométrie
+    global_frame_id: A_COMPLETER    # >>> À COMPLÉTER 5 : le repère de la carte
+    scan_topic: A_COMPLETER         # >>> À COMPLÉTER 5 : le topic du lidar
     tf_broadcast: true              # false : AMCL estime mais ne publie pas map -> odom
     transform_tolerance: 1.0
 
     # --- Modèle du lidar ---
     laser_model_type: likelihood_field
-    laser_max_range: 0.0            # >>> À COMPLÉTER 6 : portée du LDS-01 (m)
+    laser_max_range: 0.0            # >>> À COMPLÉTER 5 : portée du LDS-01 (m)
     laser_min_range: -1.0           # -1 : utiliser range_min du message
     max_beams: 60                   # rayons utilisés par mise à jour (sur 360)
     laser_likelihood_max_dist: 2.0
@@ -39,8 +45,8 @@ amcl:
     # min_particles, quand le nuage est concentré, et max_particles, quand il est étalé
     # (juste après la pose initiale, après une relocalisation globale).
     # Trop peu : la bonne pose peut ne pas être représentée. Trop : du calcul pour rien.
-    min_particles: 0                # >>> À COMPLÉTER 6 : quelques centaines (nuage concentré)
-    max_particles: 0                # >>> À COMPLÉTER 6 : quelques milliers (nuage étalé)
+    min_particles: 0                # >>> À COMPLÉTER 5 : quelques centaines (nuage concentré)
+    max_particles: 0                # >>> À COMPLÉTER 5 : quelques milliers (nuage étalé)
     pf_err: 0.05                    # KLD : erreur tolérée sur la distribution estimée...
     pf_z: 0.99                      # ... avec cette confiance (plus exigeant = plus de particules)
     resample_interval: 1            # rééchantillonner toutes les N mises à jour
@@ -64,9 +70,9 @@ amcl:
     # déplacement minimal. Trop petit : beaucoup de calcul, et à l'arrêt le
     # rééchantillonnage répété appauvrit le nuage. Trop grand : corrections rares,
     # l'erreur de l'odométrie a le temps de s'accumuler entre deux.
-    update_min_d: 0.0               # >>> À COMPLÉTER 6 : distance (m), de l'ordre d'une à deux
+    update_min_d: 0.0               # >>> À COMPLÉTER 5 : distance (m), de l'ordre d'une à deux
                                     #     longueurs de robot...
-    update_min_a: 0.0               # >>> À COMPLÉTER 6 : ... ou angle (rad), de l'ordre de 10 à 20°
+    update_min_a: 0.0               # >>> À COMPLÉTER 5 : ... ou angle (rad), de l'ordre de 10 à 20°
 
     # --- Pose initiale : donnée dans RViz (topic /initialpose) ---
     set_initial_pose: false

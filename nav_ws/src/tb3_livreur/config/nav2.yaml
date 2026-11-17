@@ -100,8 +100,8 @@ controller_server:
     # quelques degrés), le robot oscille autour du but sans jamais le valider.
     goal_checker:
       plugin: nav2_controller::SimpleGoalChecker
-      xy_goal_tolerance: 0.0        # >>> À COMPLÉTER 8 : tolérance d'arrivée en position (m)
-      yaw_goal_tolerance: 0.0       # >>> À COMPLÉTER 8 : tolérance d'arrivée en orientation (rad)
+      xy_goal_tolerance: 0.0        # >>> À COMPLÉTER 7 : tolérance d'arrivée en position (m)
+      yaw_goal_tolerance: 0.0       # >>> À COMPLÉTER 7 : tolérance d'arrivée en orientation (rad)
       stateful: true
     # DWB : échantillonne des vitesses, simule des trajectoires courtes, note avec des critics
     FollowPath:
@@ -111,11 +111,11 @@ controller_server:
       min_vel_y: 0.0
       # Vitesses maximales : DWB ne simule que des trajectoires dans ces limites. Au-delà de
       # ce que le robot peut faire, il prévoit des trajectoires que le robot ne suivra pas.
-      max_vel_x: 0.0           # >>> À COMPLÉTER 8 : vitesse linéaire maximale du Burger (m/s)
+      max_vel_x: 0.0           # >>> À COMPLÉTER 7 : vitesse linéaire maximale du Burger (m/s)
       max_vel_y: 0.0           # robot différentiel : pas de translation latérale
-      max_vel_theta: 0.0       # >>> À COMPLÉTER 8 : vitesse angulaire maximale du Burger (rad/s)
+      max_vel_theta: 0.0       # >>> À COMPLÉTER 7 : vitesse angulaire maximale du Burger (rad/s)
       min_speed_xy: 0.0
-      max_speed_xy: 0.0        # >>> À COMPLÉTER 8 : comme max_vel_x
+      max_speed_xy: 0.0        # >>> À COMPLÉTER 7 : comme max_vel_x
       min_speed_theta: 0.0
       acc_lim_x: 2.5
       acc_lim_y: 0.0
@@ -130,7 +130,7 @@ controller_server:
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
-      xy_goal_tolerance: 0.0   # >>> À COMPLÉTER 8 : la même que celle du goal_checker
+      xy_goal_tolerance: 0.0   # >>> À COMPLÉTER 7 : la même que celle du goal_checker
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: true
       stateful: true
@@ -159,23 +159,23 @@ local_costmap:
       # Avec rolling_window, la fenêtre de 3 m suit le robot (elle se recentre sur
       # robot_base_frame), mais les obstacles restent fixés dans global_frame : quand le
       # robot tourne, la grille ne tourne pas avec lui.
-      global_frame: A_COMPLETER     # >>> À COMPLÉTER 8 : un repère fixe dans la salle à court
+      global_frame: A_COMPLETER     # >>> À COMPLÉTER 7 : un repère fixe dans la salle à court
                                     #     terme et continu (sans saut quand AMCL corrige)
-      robot_base_frame: A_COMPLETER # >>> À COMPLÉTER 8 : le repère du robot au sol
+      robot_base_frame: A_COMPLETER # >>> À COMPLÉTER 7 : le repère du robot au sol
       rolling_window: true
       width: 3                      # m
       height: 3                     # m
       resolution: 0.05
       # robot_radius : rayon du cercle qui englobe le robot. Les cellules à moins de ce rayon
       # d'un obstacle sont LÉTALES : le centre du robot n'y va jamais (contrainte).
-      robot_radius: 0.0             # >>> À COMPLÉTER 8 : rayon du cercle englobant le Burger (m), voir Q16
+      robot_radius: 0.0             # >>> À COMPLÉTER 7 : rayon du cercle englobant le Burger (m), voir Q16
       plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
         plugin: nav2_costmap_2d::ObstacleLayer
         enabled: true
         observation_sources: scan   # nom libre d'une source ; ses réglages suivent
         scan:
-          topic: A_COMPLETER        # >>> À COMPLÉTER 8 : le topic du lidar
+          topic: A_COMPLETER        # >>> À COMPLÉTER 7 : le topic du lidar
           max_obstacle_height: 2.0
           clearing: true            # les rayons libèrent les cellules traversées
           marking: true             # les impacts marquent des obstacles
@@ -191,7 +191,7 @@ local_costmap:
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
         cost_scaling_factor: 3.0
-        inflation_radius: 0.0         # >>> À COMPLÉTER 8 : portée du coût (m) : 2 à 3 fois robot_radius
+        inflation_radius: 0.0         # >>> À COMPLÉTER 7 : portée du coût (m) : 2 à 3 fois robot_radius
       always_send_full_costmap: true
 
 # ====================== Costmap globale : toute la carte ======================
@@ -203,9 +203,9 @@ global_costmap:
       publish_frequency: 1.0
       # Toute la carte, fixée dans le repère de la carte : c'est sur elle que le planificateur
       # cherche un chemin vers un but donné dans la salle.
-      global_frame: A_COMPLETER     # >>> À COMPLÉTER 8 : le repère de la carte
-      robot_base_frame: A_COMPLETER # >>> À COMPLÉTER 8
-      robot_radius: 0.0             # >>> À COMPLÉTER 8 : comme la costmap locale
+      global_frame: A_COMPLETER     # >>> À COMPLÉTER 7 : le repère de la carte
+      robot_base_frame: A_COMPLETER # >>> À COMPLÉTER 7
+      robot_radius: 0.0             # >>> À COMPLÉTER 7 : comme la costmap locale
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
@@ -217,7 +217,7 @@ global_costmap:
         enabled: true
         observation_sources: scan
         scan:
-          topic: A_COMPLETER        # >>> À COMPLÉTER 8 : le topic du lidar
+          topic: A_COMPLETER        # >>> À COMPLÉTER 7 : le topic du lidar
           max_obstacle_height: 2.0
           clearing: true
           marking: true
@@ -229,7 +229,7 @@ global_costmap:
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
         cost_scaling_factor: 3.0
-        inflation_radius: 0.0       # >>> À COMPLÉTER 8 : même valeur que la costmap locale
+        inflation_radius: 0.0       # >>> À COMPLÉTER 7 : même valeur que la costmap locale
       always_send_full_costmap: true
 
 # ====================== Planification globale ======================
@@ -299,8 +299,8 @@ velocity_smoother:
     # Dernier filtre avant /cmd_vel : il écrête les vitesses du contrôleur à ces limites
     # [vx, vy, vθ] et limite les accélérations. vy = 0 : un robot différentiel ne se
     # déplace pas de côté.
-    max_velocity: [0.0, 0.0, 0.0]    # >>> À COMPLÉTER 8 : [vx, vy, vtheta] maximales du Burger
-    min_velocity: [0.0, 0.0, 0.0]    # >>> À COMPLÉTER 8 : les mêmes, négatives
+    max_velocity: [0.0, 0.0, 0.0]    # >>> À COMPLÉTER 7 : [vx, vy, vtheta] maximales du Burger
+    min_velocity: [0.0, 0.0, 0.0]    # >>> À COMPLÉTER 7 : les mêmes, négatives
     max_accel: [2.5, 0.0, 3.2]
     max_decel: [-2.5, 0.0, -3.2]
     odom_topic: odom

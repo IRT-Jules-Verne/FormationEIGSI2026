@@ -28,7 +28,7 @@ ARGS_ROBOT = ['sim', 'urdf', 'robot', 'x', 'y', 'yaw', 'derive', 'publier_monde'
 
 # Nœuds à cycle de vie pilotés par le lifecycle manager, dans l'ordre de démarrage :
 # d'abord la carte, puis la localisation qui en a besoin.
-# >>> À COMPLÉTER 7 : une liste Python de chaînes : les noms (argument name=) des deux
+# >>> À COMPLÉTER 6 : une liste Python de chaînes : les noms (argument name=) des deux
 # nœuds lancés plus bas, sous le commentaire « Les deux nœuds à cycle de vie ».
 # Le lifecycle manager les configure puis les active dans l'ordre de la liste :
 # celui qui fournit une donnée avant celui qui en a besoin.
