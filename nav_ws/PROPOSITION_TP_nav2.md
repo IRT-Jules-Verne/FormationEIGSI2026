@@ -108,7 +108,7 @@ Rappels (préparer le terminal, `colcon build`), puis distribution du tableau à
 
 ### Partie 3 — Cartographier (40 min)
 
-- **Q9** Pourquoi ne suffit-il pas de coller tous les scans selon l'odométrie ? (slide 53). Pistes : relancer le SLAM avec une dérive forte (`odom_drift_ang:=0.3`) et regarder les murs se dédoubler ou non ; comparer `map → odom` à l'identité avec `tf2_echo map odom`. Manipulation : compléter `slam.yaml` (frames, topic, résolution, portée) et `3_slam.launch.py` ; cartographier lentement, fermer la boucle.
+- **Q9** Pourquoi ne suffit-il pas de coller tous les scans selon l'odométrie ? (slide 53). Pistes : relancer le SLAM avec une dérive forte (`odom_drift_ang:=0.3`) et regarder les murs se dédoubler ou non ; comparer `map → odom` à l'identité avec `tf2_echo map odom`. Manipulation : compléter `slam.yaml` (frames, topic, mode, portée ; indices en commentaire pour lire les noms sur le robot), `3_slam.launch.py` est fourni ; cartographier lentement, fermer la boucle.
 - **Q10** Dans l'image sauvegardée, que valent les pixels libre / occupé / inconnu, et que représente `origin` dans le YAML ? Pistes : ouvrir le `.yaml`, mesurer la taille de l'image, `ros2 topic echo /map --once` (champ `info`). Manipulation : `map_saver_cli`, ouvrir le PGM dans un éditeur, **retoucher** (effacer un artefact, dessiner un mur virtuel devant la table à pieds).
 - Point de contrôle : `maps/atelier.pgm` fermé, table représentée par un rectangle dessiné à la main (ce que le lidar ne voit pas, slide 17).
 

@@ -5,7 +5,7 @@ Document encadrant. Ne pas distribuer avec l'énoncé. Les fichiers complets (UR
 ## Préparation de la séance
 
 - `pixi run nav-build` sur un poste de référence la veille ; vérifier `ros2 launch tb3_livreur 5_navigation.launch.py` avec `carte:=.../maps/atelier_secours.yaml`.
-- Les trous attendus par partie : 1 à 3 (URDF), 4 et 5 (SLAM), 6 et 7 (AMCL), 8 et 9 (Nav2), 10 (mission). Un étudiant qui saute un trou obtient une erreur explicite au lancement (`A_COMPLETER` n'est pas un repère, `0.0` n'est pas un rayon).
+- Les trous attendus par partie : 1 à 3 (URDF), 4 (SLAM, `slam.yaml` seulement : `3_slam.launch.py` est fourni complet), 5 et 6 (AMCL), 7 et 8 (Nav2), 9 (mission). Les repères et topics de `slam.yaml` et `amcl.yaml` sont précédés d'indices pour les retrouver (`ros2 topic echo /odom --once --field header.frame_id`, `child_frame_id`, `ros2 topic list -t`, `view_frames`, `/map`). Un étudiant qui saute un trou obtient une erreur explicite au lancement (`A_COMPLETER` n'est pas un repère, `0.0` n'est pas un rayon).
 - Chronométrage de référence (tests automatiques) : tour de cartographie complet 6 min à 0,2 m/s ; un but traversant l'atelier 60 à 90 s ; la tournée `cellule → poste_A → cellule → poste_B → depart` environ 6 min.
 - Valeurs attendues dans les fichiers : voir la section « Fichiers » en fin de document.
 

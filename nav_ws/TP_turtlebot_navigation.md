@@ -66,7 +66,7 @@ Le workspace contient deux packages :
 - `tb3_loopback_sim` : le simulateur (fourni, à lire, pas à modifier) ;
 - `tb3_livreur` : **votre** package : `urdf/`, `launch/`, `config/`, `rviz/`, `maps/` et le nœud `mission.py`.
 
-Regardez l'arborescence de `nav_ws/src/tb3_livreur` et repérez les fichiers que vous allez compléter : `urdf/burger.urdf.xacro`, `config/slam.yaml`, `config/amcl.yaml`, `config/nav2.yaml`, les cinq launch files et `tb3_livreur/mission.py`.
+Regardez l'arborescence de `nav_ws/src/tb3_livreur` et repérez les fichiers que vous allez compléter : `urdf/burger.urdf.xacro`, `config/slam.yaml`, `config/amcl.yaml`, `config/nav2.yaml`, deux launch files (`launch/4_localisation.launch.py` et `launch/5_navigation.launch.py`, des listes de nœuds) et `tb3_livreur/mission.py`. Les autres launch files sont fournis complets : lisez-les quand vous les lancez.
 
 ---
 
@@ -251,7 +251,14 @@ ros2 launch tb3_livreur 2_robot.launch.py derive:=false
 
 **Q9 — Avant de lancer.** Pourquoi ne suffit-il pas de coller tous les scans les uns après les autres en utilisant l'odométrie ? Qu'obtiendrait-on avec l'odométrie dérivante de la partie 2 ?
 
-**Manipulation.** Complétez `config/slam.yaml` (`>>> À COMPLÉTER 4` : repères, topic, mode, portée du lidar) et `launch/3_slam.launch.py` (`>>> À COMPLÉTER 5` : le nœud `async_slam_toolbox_node` du package `slam_toolbox`). Reconstruisez, puis :
+**Manipulation.** Complétez `config/slam.yaml` (`>>> À COMPLÉTER 4` : repères, topic, mode, portée du lidar). Les noms ne se devinent pas, ils se **lisent sur le robot** : lancez `2_robot.launch.py` et utilisez les commandes indiquées en commentaire dans le fichier :
+
+- `ros2 topic list -t` : le topic dont le type est `sensor_msgs/msg/LaserScan` ;
+- `ros2 topic echo /odom --once --field header.frame_id` : le repère dans lequel l'odométrie est exprimée ; `--field child_frame_id` : le repère du robot qu'elle déplace ;
+- `ros2 run tf2_tools view_frames` : l'arbre TF complet, pour vérifier qui est parent de qui ;
+- le repère de la carte n'existe pas encore : c'est slam_toolbox qui va le créer. Prenez le nom standard du cours (REP 105).
+
+Le launch `launch/3_slam.launch.py` est fourni complet : ouvrez-le et repérez le nœud `async_slam_toolbox_node` et le fichier de paramètres qu'il reçoit. Reconstruisez, puis :
 
 ```powershell
 ros2 launch tb3_livreur 3_slam.launch.py
@@ -309,13 +316,13 @@ Dans les parties 4 à 7, on utilise la carte fournie (`maps/atelier`). Le plan c
 
 **Pistes.** Lancez `3_slam.launch.py` et, dans un autre terminal, `4_localisation.launch.py` (ci-dessous). Regardez `view_frames` et `tf2_echo map odom` pendant quelques secondes. Arrêtez ensuite le SLAM **pour de bon**.
 
-**Manipulation.** Complétez `config/amcl.yaml` (`>>> À COMPLÉTER 6`) :
+**Manipulation.** Complétez `config/amcl.yaml` (`>>> À COMPLÉTER 5`) :
 
-- les **repères** et le **topic** : ce sont les mêmes que pour le SLAM (`slam.yaml`), et la portée du lidar est celle de Q5 ;
+- les **repères** et le **topic** : ce sont les mêmes que pour le SLAM (`slam.yaml`), et la portée du lidar est celle de Q5. Pour le repère de la carte, vérifiez dans quel repère `/map` est publiée (`ros2 topic echo /map --once --field header.frame_id`, SLAM lancé) ;
 - le **filtre à particules** : chaque particule est une pose possible du robot. À chaque mise à jour, AMCL déplace toutes les particules selon l'odométrie (en ajoutant du bruit), leur donne un poids selon l'accord entre le scan et la carte, puis retire les moins probables. Le nombre de particules s'adapte entre `min_particles` (nuage concentré, AMCL est sûr de lui) et `max_particles` (nuage étalé, il hésite) ;
 - les **seuils de mise à jour** : AMCL ne recalcule qu'après un déplacement minimal (`update_min_d` en m, `update_min_a` en rad). Les commentaires du fichier expliquent ce qui se passe si on choisit trop petit ou trop grand.
 
-Puis `launch/4_localisation.launch.py` (`>>> À COMPLÉTER 7`). `map_server` et `amcl` sont des nœuds Nav2 : ils démarrent **inactifs**, et c'est le `lifecycle_manager` qui les active un par un, dans l'ordre de la liste `NOEUDS_LOCALISATION`. Mettez-y les noms (argument `name=`) des deux nœuds lancés dans le fichier, en commençant par celui qui fournit une donnée dont l'autre a besoin (vous verrez en 4.2 ce qui se passe si on en oublie un).
+Puis `launch/4_localisation.launch.py` (`>>> À COMPLÉTER 6`). `map_server` et `amcl` sont des nœuds Nav2 : ils démarrent **inactifs**, et c'est le `lifecycle_manager` qui les active un par un, dans l'ordre de la liste `NOEUDS_LOCALISATION`. Mettez-y les noms (argument `name=`) des deux nœuds lancés dans le fichier, en commençant par celui qui fournit une donnée dont l'autre a besoin (vous verrez en 4.2 ce qui se passe si on en oublie un).
 
 Reconstruisez, puis :
 
@@ -390,14 +397,14 @@ Nav2 est un ensemble de **serveurs** spécialisés, coordonnés par un behavior 
 
 **Q16 — Avant de remplir.** Le Burger fait 138 mm de large et 178 mm de long. Quel rayon pour le cercle qui l'englobe ? Quelle marge ajouter aux murs pour être sur de en pas toucher ? Ses vitesses maximales sont 0,22 m/s et 2,84 rad/s est-ce que celà a un impact ? Si oui sur quoi ?. Enfin, la costmap locale est une fenêtre de 3 m × 3 m qui suit le robot. Elle a besoin de deux repères : `robot_base_frame`, le robot, sur lequel la fenêtre se recentre ; et `global_frame`, le repère dans lequel ses cellules sont **fixées**. Pour `global_frame`, pourquoi pas `base_footprint` (pensez à ce qui arrive aux obstacles mémorisés quand le robot tourne) ? Et pourquoi pas `map` (pensez à ce qui arrive quand AMCL corrige la pose) ?
 
-**Manipulation.** Ouvrez `config/nav2.yaml` et complétez les `>>> À COMPLÉTER 8` : `robot_radius` (deux costmaps), `inflation_radius` (deux costmaps), vitesses maximales (contrôleur et `velocity_smoother`), repères (`global_frame`, `robot_base_frame`), le topic de la source d'observation `scan`, et les tolérances d'arrivée. Chaque bloc du fichier commence par un commentaire qui explique le rôle des paramètres. Quelques repères :
+**Manipulation.** Ouvrez `config/nav2.yaml` et complétez les `>>> À COMPLÉTER 7` : `robot_radius` (deux costmaps), `inflation_radius` (deux costmaps), vitesses maximales (contrôleur et `velocity_smoother`), repères (`global_frame`, `robot_base_frame`), le topic de la source d'observation `scan`, et les tolérances d'arrivée. Chaque bloc du fichier commence par un commentaire qui explique le rôle des paramètres. Quelques repères :
 
 - **`robot_radius`** : les cellules à moins de ce rayon d'un obstacle sont **interdites** au centre du robot. C'est votre réponse à Q16 ;
 - **`inflation_radius`** : autour de cette zone interdite, un coût qui diminue avec la distance. Le robot **préfère** rester loin des murs, sans que ce soit interdit. Il doit être plus grand que `robot_radius` (typiquement 2 à 3 fois plus) ;
 - **vitesses** : celles du Burger, dans le contrôleur (`FollowPath`) et dans le `velocity_smoother`, le dernier filtre avant `/cmd_vel` (`vy` reste à 0 : le robot ne se déplace pas de côté) ;
 - **tolérances d'arrivée** : trop grandes, le robot s'arrête loin du poste ; trop petites, plus fines que la précision de la localisation (quelques cm, quelques degrés), il oscille autour du but sans jamais le valider.
 
-Complétez `launch/5_navigation.launch.py` (`>>> À COMPLÉTER 9`) : comme au trou 7, la liste des noms des nœuds à activer. Ce sont les sept serveurs Nav2 lancés plus bas dans le même fichier, et leur ordre dans le fichier convient. Reconstruisez, puis :
+Complétez `launch/5_navigation.launch.py` (`>>> À COMPLÉTER 8`) : comme au trou 6, la liste des noms des nœuds à activer. Ce sont les sept serveurs Nav2 lancés plus bas dans le même fichier, et leur ordre dans le fichier convient. Reconstruisez, puis :
 
 ```powershell
 ros2 launch tb3_livreur 5_navigation.launch.py
@@ -516,7 +523,7 @@ Le TP 1 donnait un **nom de lieu** à la tortue. On fait la même chose, mais av
 
 **Pistes.** `ros2 interface show nav2_msgs/action/NavigateToPose` : repérez les trois parties du message. Lisez `mission.py` : `waitUntilNav2Active`, `goToPose`, `isTaskComplete`, `getFeedback`, `getResult`.
 
-**Manipulation.** Le dictionnaire `LIEUX` est à compléter (`>>> À COMPLÉTER 10`). Relevez les coordonnées des lieux dans RViz avec l'outil **Publish Point** et `ros2 topic echo /clicked_point` : `cellule` (devant le convoyeur), `poste_A` (en haut à gauche), `poste_B` (en haut à droite, derrière le couloir), `rejet` (en bas à droite). Reconstruisez, puis, avec la navigation lancée et la pose initiale donnée :
+**Manipulation.** Le dictionnaire `LIEUX` est à compléter (`>>> À COMPLÉTER 9`). Relevez les coordonnées des lieux dans RViz avec l'outil **Publish Point** et `ros2 topic echo /clicked_point` : `cellule` (devant le convoyeur), `poste_A` (en haut à gauche), `poste_B` (en haut à droite, derrière le couloir), `rejet` (en bas à droite). Reconstruisez, puis, avec la navigation lancée et la pose initiale donnée :
 
 ```powershell
 ros2 run tb3_livreur mission
